@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  comments-service:
+    build: .
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - DATABASE_URL=postgres://user:password@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-secret-key
+      - MAX_COMMENT_LENGTH=1000
+      - MAX_REPLIES_PER_COMMENT=50
+      - COMMENT_RATE_LIMIT=10
+      - RATE_LIMIT_WINDOW_MINUTES=1
+      - ENABLE_PROFANITY_FILTER=true
+      - ENABLE_MODERATION=true
+      - LOG_LEVEL=info
+    depends_on:
+      - postgres
+    networks:
+      - zviewer-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=zviewer
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - zviewer-network
+
+volumes:
+  postgres_data:
+
+networks:
+  zviewer-network:
+    external: true

@@ -1,7 +1,22 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user.g.dart';
+
+enum UserRole {
+  @JsonValue('user')
+  user,
+  @JsonValue('admin')
+  admin,
+  @JsonValue('moderator')
+  moderator,
+}
+
+@JsonSerializable()
 class User {
   final String id;
   final String email;
   final String? displayName;
+  final UserRole role;
   final DateTime createdAt;
   final DateTime? lastLoginAt;
 
@@ -9,31 +24,14 @@ class User {
     required this.id,
     required this.email,
     this.displayName,
+    this.role = UserRole.user,
     required this.createdAt,
     this.lastLoginAt,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      displayName: json['displayName'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      lastLoginAt: json['lastLoginAt'] != null
-          ? DateTime.parse(json['lastLoginAt'] as String)
-          : null,
-    );
-  }
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'email': email,
-      'displayName': displayName,
-      'createdAt': createdAt.toIso8601String(),
-      'lastLoginAt': lastLoginAt?.toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toJson() => _$UserToJson(this);
 
   @override
   bool operator ==(Object other) {
@@ -42,17 +40,23 @@ class User {
         other.id == id &&
         other.email == email &&
         other.displayName == displayName &&
+        other.role == role &&
         other.createdAt == createdAt &&
         other.lastLoginAt == lastLoginAt;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, email, displayName, createdAt, lastLoginAt);
+    return Object.hash(id, email, displayName, role, createdAt, lastLoginAt);
   }
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, displayName: $displayName, createdAt: $createdAt, lastLoginAt: $lastLoginAt)';
+    return 'User(id: $id, email: $email, displayName: $displayName, role: $role, createdAt: $createdAt, lastLoginAt: $lastLoginAt)';
   }
+
+  // Helper methods
+  bool get isAdmin => role == UserRole.admin;
+  bool get isModerator => role == UserRole.moderator || role == UserRole.admin;
+  bool get isUser => role == UserRole.user;
 }

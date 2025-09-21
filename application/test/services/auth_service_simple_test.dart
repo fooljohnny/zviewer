@@ -4,11 +4,6 @@ import 'package:zviewer/models/user.dart';
 
 void main() {
   group('AuthService', () {
-    late AuthService authService;
-
-    setUp(() {
-      authService = AuthService();
-    });
 
     group('AuthException', () {
       test('should create AuthException with message', () {

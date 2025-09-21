@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  payments-service:
+    build: .
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - DATABASE_URL=postgres://user:password@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-secret-key
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+      - STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+      - STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+      - MAX_PAYMENT_AMOUNT=100000
+      - MIN_PAYMENT_AMOUNT=50
+      - PAYMENT_RATE_LIMIT=5
+      - RATE_LIMIT_WINDOW_MINUTES=1
+      - ENABLE_AUDIT_LOGGING=true
+      - LOG_LEVEL=info
+    depends_on:
+      - postgres
+    networks:
+      - zviewer-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=zviewer
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - zviewer-network
+
+volumes:
+  postgres_data:
+
+networks:
+  zviewer-network:
+    external: true

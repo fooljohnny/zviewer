@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/comment_provider.dart';
+import 'providers/payment_provider.dart';
+import 'providers/content_management_provider.dart';
+import 'services/content_management_service.dart';
 import 'widgets/multimedia_viewer/multimedia_viewer.dart';
 import 'widgets/auth/auth_screen.dart';
+import 'widgets/payments/payment_screen.dart';
+import 'widgets/admin/admin_dashboard.dart';
 
 void main() {
   runApp(const ZViewerApp());
@@ -13,8 +19,26 @@ class ZViewerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => CommentProvider()),
+        ChangeNotifierProvider(create: (context) => PaymentProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ContentManagementProvider>(
+          create: (context) => ContentManagementProvider(
+            service: ContentManagementService(
+              authToken: context.read<AuthProvider>().user?.id,
+            ),
+            authProvider: context.read<AuthProvider>(),
+          ),
+          update: (context, authProvider, previous) => previous ?? ContentManagementProvider(
+            service: ContentManagementService(
+              authToken: authProvider.user?.id,
+            ),
+            authProvider: authProvider,
+          ),
+        ),
+      ],
       child: MaterialApp(
         title: 'ZViewer',
         theme: ThemeData(
@@ -92,28 +116,72 @@ class _MultimediaViewerDemoState extends State<MultimediaViewerDemo> {
         actions: [
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
-              return PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'logout') {
-                    await authProvider.logout();
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        Icon(Icons.logout),
-                        SizedBox(width: 8),
-                        Text('Logout'),
-                      ],
+              return Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.payment),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PaymentScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: 'Payments',
+                  ),
+                  if (authProvider.isAdmin)
+                    IconButton(
+                      icon: const Icon(Icons.admin_panel_settings),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AdminDashboard(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Admin Dashboard',
+                    ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'admin') {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AdminDashboard(),
+                          ),
+                        );
+                      } else if (value == 'logout') {
+                        await authProvider.logout();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (authProvider.isAdmin)
+                        const PopupMenuItem(
+                          value: 'admin',
+                          child: Row(
+                            children: [
+                              Icon(Icons.admin_panel_settings),
+                              SizedBox(width: 8),
+                              Text('Admin Dashboard'),
+                            ],
+                          ),
+                        ),
+                      const PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout),
+                            SizedBox(width: 8),
+                            Text('Logout'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    child: const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Icon(Icons.account_circle),
                     ),
                   ),
                 ],
-                child: const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Icon(Icons.account_circle),
-                ),
               );
             },
           ),

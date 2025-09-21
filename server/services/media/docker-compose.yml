@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  media-service:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DATABASE_URL=postgres://user:password@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-secret-key
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/uploads/media
+      - MAX_IMAGE_SIZE=104857600
+      - MAX_VIDEO_SIZE=524288000
+      - MAX_CONCURRENT_UPLOADS=10
+      - UPLOAD_TIMEOUT=30
+    volumes:
+      - media_uploads:/uploads/media
+    depends_on:
+      - postgres
+    networks:
+      - zviewer-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=zviewer
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - zviewer-network
+
+volumes:
+  postgres_data:
+  media_uploads:
+
+networks:
+  zviewer-network:
+    external: true

@@ -16,6 +16,8 @@ class AuthProvider with ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _user != null;
   bool get isInitialized => _isInitialized;
+  bool get isAdmin => _user?.isAdmin ?? false;
+  bool get isModerator => _user?.isModerator ?? false;
 
   // Initialize authentication state
   Future<void> initialize() async {
