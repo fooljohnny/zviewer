@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import '../common/glassmorphism_background.dart';
+import '../common/zviewer_logo.dart';
 import 'login_form.dart';
 import 'register_form.dart';
 
@@ -40,103 +43,105 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Authentication'),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(
-              icon: Icon(Icons.login),
-              text: 'Login',
+      body: GlassmorphismBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: _buildAuthContent(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const ZViewerLogoMedium(),
+          const SizedBox(height: 16),
+          Text(
+            'ZViewer',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            Tab(
-              icon: Icon(Icons.person_add),
-              text: 'Register',
+          ),
+          Text(
+            '多媒体画廊',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthContent() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      child: GlassmorphismCardBackground(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildTabBar(),
+            const SizedBox(height: 24),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  LoginForm(
+                    onSwitchToRegister: _switchToRegister,
+                  ),
+                  RegisterForm(
+                    onSwitchToLogin: _switchToLogin,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      body: TabBarView(
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
         controller: _tabController,
-        children: [
-          // Login Tab
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.account_circle,
-                        size: 80,
-                        color: Colors.blue,
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Welcome Back',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Sign in to your account',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      LoginForm(onSwitchToRegister: _switchToRegister),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+        indicator: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white.withOpacity(0.7),
+        tabs: const [
+          Tab(
+            icon: Icon(Icons.login),
+            text: '登录',
           ),
-          // Register Tab
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.person_add,
-                        size: 80,
-                        color: Colors.green,
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Create Account',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Join us today',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      RegisterForm(onSwitchToLogin: _switchToLogin),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          Tab(
+            icon: Icon(Icons.person_add),
+            text: '注册',
           ),
         ],
       ),

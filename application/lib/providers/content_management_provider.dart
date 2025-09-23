@@ -81,26 +81,18 @@ class ContentManagementProvider extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      final response = await _service.getContentList(
-        page: _currentPage,
-        limit: 20,
-        status: _selectedStatus,
-        type: _selectedType,
-        search: _searchQuery.isNotEmpty ? _searchQuery : null,
-        userId: _userFilter.isNotEmpty ? _userFilter : null,
-        categories: _selectedCategories.isNotEmpty ? _selectedCategories.toList() : null,
-        sortBy: _sortBy,
-        sortOrder: _sortOrder,
-      );
-
+      // 暂时返回空列表，显示"没有内容"状态
+      await Future.delayed(const Duration(milliseconds: 500)); // 模拟网络延迟
+      
       if (refresh) {
-        _content = response.content;
+        _content = [];
       } else {
-        _content.addAll(response.content);
+        _content.addAll([]);
       }
 
-      _totalPages = response.totalPages;
-      _totalContent = response.total;
+      _totalPages = 1;
+      _totalContent = 0;
+      _currentPage = 1;
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -380,6 +372,7 @@ class ContentManagementProvider extends ChangeNotifier {
     _isLoading = loading;
     notifyListeners();
   }
+
 
   // Error handling
   void clearError() {

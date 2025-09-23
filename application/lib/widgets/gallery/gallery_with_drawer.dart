@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../common/glassmorphism_card.dart';
+import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 import '../profile/profile_page.dart';
 import 'main_gallery_page.dart';
@@ -54,10 +55,11 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      body: Stack(
-        children: [
-          // 主内容
-          const MainGalleryPage(),
+      body: ModernBackground(
+        child: Stack(
+          children: [
+            // 主内容
+            const MainGalleryPage(),
           
           // 抽屉遮罩
           AnimatedBuilder(
@@ -83,7 +85,7 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
             builder: (context, child) {
               return Transform.translate(
                 offset: Offset(
-                  -MediaQuery.of(context).size.width * 0.8 * (1 - _drawerAnimation.value),
+                  -MediaQuery.of(context).size.width * 0.45 * (1 - _drawerAnimation.value),
                   0,
                 ),
                 child: _buildDrawer(),
@@ -91,49 +93,84 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
             },
           ),
           
-          // 悬浮菜单按钮
-          _buildFloatingMenuButton(),
+                    // 悬浮菜单按钮 - 只在抽屉关闭时显示
+                    AnimatedBuilder(
+                      animation: _drawerAnimation,
+                      builder: (context, child) {
+                        return Positioned(
+                          top: 100,
+                          left: 80,
+                          child: Transform.scale(
+                            scale: 1.0 - _drawerAnimation.value * 0.3, // 稍微缩小
+                            child: Opacity(
+                              opacity: 1.0 - _drawerAnimation.value,
+                              child: _buildFloatingMenuButton(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
         ],
+        ),
       ),
     );
   }
 
   Widget _buildDrawer() {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
+      width: MediaQuery.of(context).size.width * 0.45,
       height: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1C1C1E),
-            Color(0xFF2C2C2E),
-            Color(0xFF3A3A3C),
+            Color(0xFF2D1B69),
+            Color(0xFF11998E),
+            Color(0xFF38EF7D),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 30,
+            offset: const Offset(8, 0),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.1),
             blurRadius: 20,
-            offset: const Offset(5, 0),
+            offset: const Offset(-2, 0),
           ),
         ],
       ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            // 抽屉头部
-            _buildDrawerHeader(),
-            
-            // 菜单项
-            Expanded(
-              child: _buildMenuItems(),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
             ),
-            
-            // 抽屉底部
-            _buildDrawerFooter(),
-          ],
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 抽屉头部
+                  _buildDrawerHeader(),
+                  
+                  // 菜单项
+                  Expanded(
+                    child: _buildMenuItems(),
+                  ),
+                  
+                  // 抽屉底部
+                  _buildDrawerFooter(),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -141,10 +178,33 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
 
   Widget _buildDrawerHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          const ZViewerLogoMedium(),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            child: const ZViewerLogo(size: 32),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -153,26 +213,35 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
                 const Text(
                   'ZViewer',
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 Text(
                   '多媒体查看器',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: _closeDrawer,
-            icon: const Icon(
-              Icons.close,
-              color: Colors.white,
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            child: IconButton(
+              onPressed: _closeDrawer,
+              icon: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -354,49 +423,45 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   }
 
   Widget _buildFloatingMenuButton() {
-    return Positioned(
-      top: 50,
-      left: 20,
-      child: GestureDetector(
-        onTap: _openDrawer,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF007AFF),
-                Color(0xFF5856D6),
-                Color(0xFFFF9500),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
+    return GestureDetector(
+      onTap: _openDrawer,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF007AFF),
+              Color(0xFF5856D6),
+              Color(0xFFFF9500),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1,
-                  ),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
                 ),
-                child: const Center(
-                  child: ZViewerLogoSmall(),
-                ),
+              ),
+              child: const Center(
+                child: ZViewerLogoSmall(),
               ),
             ),
           ),

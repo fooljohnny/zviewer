@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
 import '../../providers/auth_provider.dart';
 import '../common/glassmorphism_card.dart';
 import '../common/zviewer_logo.dart';
@@ -104,31 +105,37 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Container(
         decoration: _buildBackgroundDecoration(),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 头部信息
-                _buildHeader(),
-                const SizedBox(height: 30),
-                
-                // 用户信息卡片
-                _buildUserInfoCard(),
-                const SizedBox(height: 20),
-                
-                // 修改密码卡片
-                _buildChangePasswordCard(),
-                const SizedBox(height: 20),
-                
-                // 其他功能卡片
-                _buildOtherFeaturesCard(),
-                const SizedBox(height: 20),
-                
-                // 退出登录按钮
-                _buildLogoutButton(),
-              ],
-            ),
+          child: Column(
+            children: [
+              // 头部区域（带关闭按钮）
+              _buildHeader(),
+              
+              // 内容区域
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 用户信息卡片
+                      _buildUserInfoCard(),
+                      const SizedBox(height: 20),
+                      
+                      // 修改密码卡片
+                      _buildChangePasswordCard(),
+                      const SizedBox(height: 20),
+                      
+                      // 其他功能卡片
+                      _buildOtherFeaturesCard(),
+                      const SizedBox(height: 20),
+                      
+                      // 退出登录按钮
+                      _buildLogoutButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -141,42 +148,84 @@ class _ProfilePageState extends State<ProfilePage> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFF1C1C1E),
-          Color(0xFF2C2C2E),
-          Color(0xFF3A3A3C),
+          Color(0xFF2D1B69),
+          Color(0xFF11998E),
+          Color(0xFF38EF7D),
         ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(
-      children: [
-        const ZViewerLogoMedium(),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '个人中心',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                '管理您的账户信息',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
           ),
         ),
-      ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            child: const ZViewerLogo(size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '个人中心',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  '管理您的账户信息',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.8),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

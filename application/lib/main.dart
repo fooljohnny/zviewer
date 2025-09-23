@@ -12,7 +12,7 @@ import 'widgets/gallery/main_gallery_page.dart';
 import 'widgets/gallery/gallery_with_drawer.dart';
 import 'widgets/gallery/responsive_demo_page.dart';
 import 'widgets/gallery/layout_test_tool.dart';
-import 'widgets/auth/auth_screen.dart';
+import 'widgets/auth/modern_auth_screen.dart';
 import 'widgets/payments/payment_screen.dart';
 import 'widgets/admin/admin_dashboard.dart';
 import 'config/app_config.dart';
@@ -60,6 +60,10 @@ class ZViewerApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
+          scrollbarTheme: const ScrollbarThemeData(
+            thumbVisibility: WidgetStatePropertyAll(false),
+            trackVisibility: WidgetStatePropertyAll(false),
+          ),
         ),
         home: const AuthWrapper(),
       ),
@@ -98,9 +102,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         // Show auth screen if not authenticated
-        if (!authProvider.isAuthenticated) {
-          return const AuthScreen();
-        }
+                if (!authProvider.isAuthenticated) {
+                  return const ModernAuthScreen();
+                }
 
                 // Show main app if authenticated
                 return const GalleryWithDrawer();

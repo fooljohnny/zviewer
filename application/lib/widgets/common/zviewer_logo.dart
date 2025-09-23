@@ -25,7 +25,7 @@ class ZViewerLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: _getGradient(),
-        borderRadius: BorderRadius.circular(size * 0.2),
+        borderRadius: BorderRadius.circular(size / 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -35,7 +35,7 @@ class ZViewerLogo extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(size * 0.2),
+        borderRadius: BorderRadius.circular(size / 2),
         child: BackdropFilter(
           filter: ImageFilter.blur(
             sigmaX: size * 0.3,
