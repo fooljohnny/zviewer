@@ -1,0 +1,31 @@
+{
+  "environment": "development",
+  "api": {
+    "development": {
+      "baseUrl": "http://localhost:8080",
+      "timeout": 30000,
+      "retryAttempts": 3
+    },
+    "production": {
+      "baseUrl": "https://api.zviewer.com",
+      "timeout": 30000,
+      "retryAttempts": 3
+    }
+  },
+  "app": {
+    "name": "ZViewer",
+    "version": "1.0.0",
+    "debug": true
+  },
+  "storage": {
+    "tokenKey": "auth_token",
+    "userKey": "user_data",
+    "settingsKey": "app_settings"
+  },
+  "features": {
+    "enableComments": true,
+    "enablePayments": true,
+    "enableAdmin": true,
+    "enableAnalytics": false
+  }
+}

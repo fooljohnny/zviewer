@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import '../models/content_item.dart';
 import '../models/content_category.dart';
 import '../models/admin_action.dart';
+import '../config/api_config.dart';
 
 class ContentManagementService {
-  static const String _baseUrl = 'https://api.zviewer.com/api/admin';
+  static String get _baseUrl => ApiConfig.adminUrl;
   final String? _authToken;
 
   ContentManagementService({String? authToken}) : _authToken = authToken;

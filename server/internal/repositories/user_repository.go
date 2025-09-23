@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"zviewer-server/internal/models"
-
-	"github.com/google/uuid"
 )
 
 // UserRepository handles user database operations

@@ -204,7 +204,7 @@ class _BulkActionDialogState extends State<BulkActionDialog> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
   final _metadataController = TextEditingController();
-  Map<String, dynamic> _metadata = {};
+  final Map<String, dynamic> _metadata = {};
 
   @override
   void dispose() {

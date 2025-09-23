@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"zviewer-comments-service/internal/middleware"
 	"zviewer-comments-service/internal/models"

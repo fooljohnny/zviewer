@@ -94,8 +94,8 @@ func RateLimitMiddleware(rateLimit rate.Limit, burst int) gin.HandlerFunc {
 		// Check if request is allowed
 		if !limiter.Allow() {
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"message": "Rate limit exceeded",
-				"retry_after": time.Until(limiter.Reserve().DelayFrom(time.Now())).Seconds(),
+				"message":     "Rate limit exceeded",
+				"retry_after": limiter.Reserve().DelayFrom(time.Now()).Seconds(),
 			})
 			c.Abort()
 			return
@@ -124,8 +124,8 @@ func CommentRateLimitMiddleware(rateLimit rate.Limit, burst int) gin.HandlerFunc
 		// Check if request is allowed
 		if !limiter.Allow() {
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"message": "Comment creation rate limit exceeded",
-				"retry_after": time.Until(limiter.Reserve().DelayFrom(time.Now())).Seconds(),
+				"message":     "Comment creation rate limit exceeded",
+				"retry_after": limiter.Reserve().DelayFrom(time.Now()).Seconds(),
 			})
 			c.Abort()
 			return

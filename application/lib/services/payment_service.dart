@@ -4,9 +4,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/payment.dart';
 import '../models/subscription.dart';
 import '../models/payment_method.dart';
+import '../config/api_config.dart';
 
 class PaymentService {
-  static const String _baseUrl = 'https://api.zviewer.com'; // Replace with actual API URL
+  static String get _baseUrl => ApiConfig.paymentsUrl;
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _tokenKey = 'auth_token';
 

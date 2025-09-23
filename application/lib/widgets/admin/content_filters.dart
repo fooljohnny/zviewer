@@ -137,7 +137,7 @@ class _ContentFiltersState extends State<ContentFilters> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<ContentType?>(
-                        value: provider.selectedType,
+                        initialValue: provider.selectedType,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(

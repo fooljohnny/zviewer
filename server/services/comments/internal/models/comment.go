@@ -1,8 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,19 +9,19 @@ import (
 
 // Comment represents a comment in the system
 type Comment struct {
-	ID          string     `json:"id" db:"id"`
-	UserID      string     `json:"userId" db:"user_id"`
-	MediaItemID string     `json:"mediaItemId" db:"media_item_id"`
-	ParentID    *string    `json:"parentId,omitempty" db:"parent_id"`
-	Content     string     `json:"content" db:"content"`
+	ID          string        `json:"id" db:"id"`
+	UserID      string        `json:"userId" db:"user_id"`
+	MediaItemID string        `json:"mediaItemId" db:"media_item_id"`
+	ParentID    *string       `json:"parentId,omitempty" db:"parent_id"`
+	Content     string        `json:"content" db:"content"`
 	Status      CommentStatus `json:"status" db:"status"`
-	CreatedAt   time.Time  `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time  `json:"updatedAt" db:"updated_at"`
-	DeletedAt   *time.Time `json:"deletedAt,omitempty" db:"deleted_at"`
+	CreatedAt   time.Time     `json:"createdAt" db:"created_at"`
+	UpdatedAt   time.Time     `json:"updatedAt" db:"updated_at"`
+	DeletedAt   *time.Time    `json:"deletedAt,omitempty" db:"deleted_at"`
 	// Computed fields
-	UserName    string     `json:"userName,omitempty" db:"user_name"`
-	RepliesCount int       `json:"repliesCount,omitempty" db:"replies_count"`
-	IsEdited    bool       `json:"isEdited" db:"is_edited"`
+	UserName     string `json:"userName,omitempty" db:"user_name"`
+	RepliesCount int    `json:"repliesCount,omitempty" db:"replies_count"`
+	IsEdited     bool   `json:"isEdited" db:"is_edited"`
 }
 
 // CommentStatus represents the status of a comment
@@ -92,40 +90,40 @@ func (q *CommentQuery) SetDefaults() {
 
 // CommentStats represents comment statistics
 type CommentStats struct {
-	TotalComments    int64 `json:"totalComments"`
-	ActiveComments   int64 `json:"activeComments"`
-	DeletedComments  int64 `json:"deletedComments"`
+	TotalComments     int64 `json:"totalComments"`
+	ActiveComments    int64 `json:"activeComments"`
+	DeletedComments   int64 `json:"deletedComments"`
 	ModeratedComments int64 `json:"moderatedComments"`
-	PendingComments  int64 `json:"pendingComments"`
-	CommentsToday    int64 `json:"commentsToday"`
-	CommentsThisWeek int64 `json:"commentsThisWeek"`
+	PendingComments   int64 `json:"pendingComments"`
+	CommentsToday     int64 `json:"commentsToday"`
+	CommentsThisWeek  int64 `json:"commentsThisWeek"`
 	CommentsThisMonth int64 `json:"commentsThisMonth"`
 }
 
 // UserCommentStats represents user-specific comment statistics
 type UserCommentStats struct {
-	UserID         string `json:"userId"`
-	UserName       string `json:"userName"`
-	TotalComments  int64  `json:"totalComments"`
-	ActiveComments int64  `json:"activeComments"`
+	UserID         string     `json:"userId"`
+	UserName       string     `json:"userName"`
+	TotalComments  int64      `json:"totalComments"`
+	ActiveComments int64      `json:"activeComments"`
 	LastCommentAt  *time.Time `json:"lastCommentAt"`
 }
 
 // MediaCommentStats represents media-specific comment statistics
 type MediaCommentStats struct {
-	MediaID        string `json:"mediaId"`
-	TotalComments  int64  `json:"totalComments"`
-	ActiveComments int64  `json:"activeComments"`
+	MediaID        string     `json:"mediaId"`
+	TotalComments  int64      `json:"totalComments"`
+	ActiveComments int64      `json:"activeComments"`
 	LastCommentAt  *time.Time `json:"lastCommentAt"`
 }
 
 // CommentModeration represents comment moderation data
 type CommentModeration struct {
-	CommentID     string    `json:"commentId"`
-	ModeratedBy   string    `json:"moderatedBy"`
-	ModeratedAt   time.Time `json:"moderatedAt"`
-	Reason        string    `json:"reason"`
-	Action        string    `json:"action"` // "approve", "reject", "delete"
+	CommentID      string        `json:"commentId"`
+	ModeratedBy    string        `json:"moderatedBy"`
+	ModeratedAt    time.Time     `json:"moderatedAt"`
+	Reason         string        `json:"reason"`
+	Action         string        `json:"action"` // "approve", "reject", "delete"
 	PreviousStatus CommentStatus `json:"previousStatus"`
 }
 

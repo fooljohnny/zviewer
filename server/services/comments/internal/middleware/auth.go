@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"zviewer-comments-service/internal/config"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )

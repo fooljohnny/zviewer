@@ -104,8 +104,13 @@ class ZViewerStarter:
     def _command_exists(self, command: str) -> bool:
         """Check if a command exists in PATH"""
         try:
-            subprocess.run([command, "--version"], 
-                         capture_output=True, check=True, timeout=10)
+            # Use different version flags for different commands
+            if command in [self.go_cmd, "go", "go.exe"]:
+                subprocess.run([command, "version"], 
+                             capture_output=True, check=True, timeout=10)
+            else:
+                subprocess.run([command, "--version"], 
+                             capture_output=True, check=True, timeout=10)
             return True
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             return False
@@ -181,6 +186,8 @@ class ZViewerStarter:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
                 bufsize=1,
                 universal_newlines=True
             )
@@ -242,6 +249,8 @@ class ZViewerStarter:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
                 bufsize=1,
                 universal_newlines=True
             )

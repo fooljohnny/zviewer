@@ -36,6 +36,10 @@ class CommentList extends StatelessWidget {
     }
 
     if (error != null && comments.isEmpty) {
+      // Check if it's an authentication error
+      final isAuthError = error!.contains('Authentication required') || 
+                         error!.contains('Authentication failed');
+      
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -43,13 +47,13 @@ class CommentList extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.error_outline,
+                isAuthError ? Icons.lock_outline : Icons.error_outline,
                 size: 48,
                 color: Colors.grey[400],
               ),
               const SizedBox(height: 16),
               Text(
-                'Failed to load comments',
+                isAuthError ? 'Comments require authentication' : 'Failed to load comments',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -57,19 +61,23 @@ class CommentList extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                error!,
+                isAuthError 
+                  ? 'Please log in to view and post comments'
+                  : error!,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[500],
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              if (onRetry != null)
-                ElevatedButton(
-                  onPressed: onRetry,
-                  child: const Text('Retry'),
-                ),
+              if (!isAuthError) ...[
+                const SizedBox(height: 16),
+                if (onRetry != null)
+                  ElevatedButton(
+                    onPressed: onRetry,
+                    child: const Text('Retry'),
+                  ),
+              ],
             ],
           ),
         ),

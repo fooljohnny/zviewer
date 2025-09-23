@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -21,10 +22,10 @@ func Connect(databaseURL string) (*sql.DB, error) {
 	}
 
 	// Set connection pool settings optimized for high concurrency
-	db.SetMaxOpenConns(100)  // Increased for high concurrency
-	db.SetMaxIdleConns(25)   // Increased idle connections
-	db.SetConnMaxLifetime(5 * time.Minute)  // Connection lifetime
-	db.SetConnMaxIdleTime(1 * time.Minute)  // Idle connection timeout
+	db.SetMaxOpenConns(100)                // Increased for high concurrency
+	db.SetMaxIdleConns(25)                 // Increased idle connections
+	db.SetConnMaxLifetime(5 * time.Minute) // Connection lifetime
+	db.SetConnMaxIdleTime(1 * time.Minute) // Idle connection timeout
 
 	logrus.Info("Database connection established successfully")
 	return db, nil

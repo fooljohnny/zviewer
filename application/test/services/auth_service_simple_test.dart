@@ -11,7 +11,7 @@ void main() {
         const message = 'Test error message';
 
         // Act
-        final exception = AuthException(message);
+        const exception = AuthException(message);
 
         // Assert
         expect(exception.message, equals(message));

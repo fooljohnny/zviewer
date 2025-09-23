@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"zviewer-comments-service/internal/models"
-
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // CommentRepository handles database operations for comments
@@ -28,23 +25,23 @@ func (r *CommentRepository) Create(comment *models.Comment) error {
 		INSERT INTO comments (id, user_id, media_item_id, parent_id, content, status, created_at, updated_at, is_edited)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
-	
-	_, err := r.db.Exec(query, 
-		comment.ID, 
-		comment.UserID, 
-		comment.MediaItemID, 
-		comment.ParentID, 
-		comment.Content, 
-		comment.Status, 
-		comment.CreatedAt, 
-		comment.UpdatedAt, 
+
+	_, err := r.db.Exec(query,
+		comment.ID,
+		comment.UserID,
+		comment.MediaItemID,
+		comment.ParentID,
+		comment.Content,
+		comment.Status,
+		comment.CreatedAt,
+		comment.UpdatedAt,
 		comment.IsEdited,
 	)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create comment: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -58,21 +55,21 @@ func (r *CommentRepository) GetByID(id string) (*models.Comment, error) {
 		LEFT JOIN users u ON c.user_id = u.id
 		WHERE c.id = $1
 	`
-	
+
 	comment := &models.Comment{}
 	err := r.db.QueryRow(query, id).Scan(
 		&comment.ID, &comment.UserID, &comment.MediaItemID, &comment.ParentID,
 		&comment.Content, &comment.Status, &comment.CreatedAt, &comment.UpdatedAt,
 		&comment.DeletedAt, &comment.IsEdited, &comment.RepliesCount, &comment.UserName,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("comment not found")
 		}
 		return nil, fmt.Errorf("failed to get comment: %w", err)
 	}
-	
+
 	return comment, nil
 }
 
@@ -83,19 +80,19 @@ func (r *CommentRepository) Update(comment *models.Comment) error {
 		SET content = $2, status = $3, updated_at = $4, is_edited = $5
 		WHERE id = $1
 	`
-	
-	_, err := r.db.Exec(query, 
-		comment.ID, 
-		comment.Content, 
-		comment.Status, 
-		comment.UpdatedAt, 
+
+	_, err := r.db.Exec(query,
+		comment.ID,
+		comment.Content,
+		comment.Status,
+		comment.UpdatedAt,
 		comment.IsEdited,
 	)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to update comment: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -106,22 +103,22 @@ func (r *CommentRepository) Delete(id string) error {
 		SET status = 'deleted', deleted_at = $2, updated_at = $2
 		WHERE id = $1
 	`
-	
+
 	_, err := r.db.Exec(query, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to delete comment: %w", err)
 	}
-	
+
 	return nil
 }
 
 // List retrieves comments with pagination and filtering
 func (r *CommentRepository) List(query models.CommentQuery) ([]models.Comment, int64, error) {
 	query.SetDefaults()
-	
+
 	// Build WHERE clause
 	whereClause, args := r.buildWhereClause(query)
-	
+
 	// Count total records
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM comments c LEFT JOIN users u ON c.user_id = u.id %s", whereClause)
 	var total int64
@@ -129,7 +126,7 @@ func (r *CommentRepository) List(query models.CommentQuery) ([]models.Comment, i
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count comments: %w", err)
 	}
-	
+
 	// Build main query
 	mainQuery := fmt.Sprintf(`
 		SELECT c.id, c.user_id, c.media_item_id, c.parent_id, c.content, c.status,
@@ -141,16 +138,16 @@ func (r *CommentRepository) List(query models.CommentQuery) ([]models.Comment, i
 		ORDER BY c.%s %s
 		LIMIT $%d OFFSET $%d
 	`, whereClause, query.SortBy, query.SortOrder, len(args)+1, len(args)+2)
-	
+
 	// Add pagination parameters
 	args = append(args, query.Limit, (query.Page-1)*query.Limit)
-	
+
 	rows, err := r.db.Query(mainQuery, args...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to query comments: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var comments []models.Comment
 	for rows.Next() {
 		comment := models.Comment{}
@@ -164,7 +161,7 @@ func (r *CommentRepository) List(query models.CommentQuery) ([]models.Comment, i
 		}
 		comments = append(comments, comment)
 	}
-	
+
 	return comments, total, nil
 }
 
@@ -187,18 +184,18 @@ func (r *CommentRepository) GetStats() (*models.CommentStats, error) {
 		       pending_comments, comments_today, comments_this_week, comments_this_month
 		FROM comment_stats
 	`
-	
+
 	stats := &models.CommentStats{}
 	err := r.db.QueryRow(query).Scan(
 		&stats.TotalComments, &stats.ActiveComments, &stats.DeletedComments,
 		&stats.ModeratedComments, &stats.PendingComments, &stats.CommentsToday,
 		&stats.CommentsThisWeek, &stats.CommentsThisMonth,
 	)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comment stats: %w", err)
 	}
-	
+
 	return stats, nil
 }
 
@@ -209,20 +206,20 @@ func (r *CommentRepository) GetUserStats(userID string) (*models.UserCommentStat
 		FROM user_comment_stats
 		WHERE user_id = $1
 	`
-	
+
 	stats := &models.UserCommentStats{}
 	err := r.db.QueryRow(query, userID).Scan(
 		&stats.UserID, &stats.UserName, &stats.TotalComments,
 		&stats.ActiveComments, &stats.LastCommentAt,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &models.UserCommentStats{UserID: userID}, nil
 		}
 		return nil, fmt.Errorf("failed to get user stats: %w", err)
 	}
-	
+
 	return stats, nil
 }
 
@@ -233,19 +230,19 @@ func (r *CommentRepository) GetMediaStats(mediaID string) (*models.MediaCommentS
 		FROM media_comment_stats
 		WHERE media_item_id = $1
 	`
-	
+
 	stats := &models.MediaCommentStats{}
 	err := r.db.QueryRow(query, mediaID).Scan(
 		&stats.MediaID, &stats.TotalComments, &stats.ActiveComments, &stats.LastCommentAt,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &models.MediaCommentStats{MediaID: mediaID}, nil
 		}
 		return nil, fmt.Errorf("failed to get media stats: %w", err)
 	}
-	
+
 	return stats, nil
 }
 
@@ -254,25 +251,25 @@ func (r *CommentRepository) buildWhereClause(query models.CommentQuery) (string,
 	var conditions []string
 	var args []interface{}
 	argIndex := 1
-	
+
 	if query.MediaID != "" {
 		conditions = append(conditions, fmt.Sprintf("c.media_item_id = $%d", argIndex))
 		args = append(args, query.MediaID)
 		argIndex++
 	}
-	
+
 	if query.UserID != "" {
 		conditions = append(conditions, fmt.Sprintf("c.user_id = $%d", argIndex))
 		args = append(args, query.UserID)
 		argIndex++
 	}
-	
+
 	if query.Status != "" {
 		conditions = append(conditions, fmt.Sprintf("c.status = $%d", argIndex))
 		args = append(args, query.Status)
 		argIndex++
 	}
-	
+
 	if query.ParentID != "" {
 		conditions = append(conditions, fmt.Sprintf("c.parent_id = $%d", argIndex))
 		args = append(args, query.ParentID)
@@ -280,17 +277,17 @@ func (r *CommentRepository) buildWhereClause(query models.CommentQuery) (string,
 	} else if query.ParentID == "null" {
 		conditions = append(conditions, "c.parent_id IS NULL")
 	}
-	
+
 	// Always exclude soft-deleted comments unless specifically requested
 	if query.Status != "deleted" {
 		conditions = append(conditions, "c.deleted_at IS NULL")
 	}
-	
+
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
-	
+
 	return whereClause, args
 }
 

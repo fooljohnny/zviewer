@@ -4,13 +4,28 @@ import 'providers/auth_provider.dart';
 import 'providers/comment_provider.dart';
 import 'providers/payment_provider.dart';
 import 'providers/content_management_provider.dart';
+import 'providers/danmaku_provider.dart';
 import 'services/content_management_service.dart';
 import 'widgets/multimedia_viewer/multimedia_viewer.dart';
+import 'widgets/navigation/main_navigation.dart';
+import 'widgets/gallery/main_gallery_page.dart';
+import 'widgets/gallery/gallery_with_drawer.dart';
+import 'widgets/gallery/responsive_demo_page.dart';
+import 'widgets/gallery/layout_test_tool.dart';
 import 'widgets/auth/auth_screen.dart';
 import 'widgets/payments/payment_screen.dart';
 import 'widgets/admin/admin_dashboard.dart';
+import 'config/app_config.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize configuration
+  await AppConfig.initialize();
+  
+  // Print configuration for debugging
+  AppConfig.printConfig();
+  
   runApp(const ZViewerApp());
 }
 
@@ -24,6 +39,7 @@ class ZViewerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => CommentProvider()),
         ChangeNotifierProvider(create: (context) => PaymentProvider()),
+        ChangeNotifierProvider(create: (context) => DanmakuProvider()),
         ChangeNotifierProxyProvider<AuthProvider, ContentManagementProvider>(
           create: (context) => ContentManagementProvider(
             service: ContentManagementService(
@@ -86,8 +102,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return const AuthScreen();
         }
 
-        // Show main app if authenticated
-        return const MultimediaViewerDemo();
+                // Show main app if authenticated
+                return const GalleryWithDrawer();
       },
     );
   }

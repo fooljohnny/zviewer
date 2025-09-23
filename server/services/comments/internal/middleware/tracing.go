@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,34 +21,34 @@ func TracingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Generate request ID
 		requestID := uuid.New().String()
-		
+
 		// Set request ID in context
 		c.Set(RequestIDKey, requestID)
-		
+
 		// Add request ID to response headers
 		c.Header("X-Request-ID", requestID)
-		
+
 		// Create context with request ID
 		ctx := context.WithValue(c.Request.Context(), RequestIDKey, requestID)
 		c.Request = c.Request.WithContext(ctx)
-		
+
 		// Log request start
 		start := time.Now()
 		logrus.WithFields(logrus.Fields{
-			"request_id": requestID,
-			"method":     c.Request.Method,
-			"path":       c.Request.URL.Path,
+			"request_id":  requestID,
+			"method":      c.Request.Method,
+			"path":        c.Request.URL.Path,
 			"remote_addr": c.ClientIP(),
-			"user_agent": c.Request.UserAgent(),
+			"user_agent":  c.Request.UserAgent(),
 		}).Info("Request started")
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Log request completion
 		duration := time.Since(start)
 		status := c.Writer.Status()
-		
+
 		logrus.WithFields(logrus.Fields{
 			"request_id": requestID,
 			"method":     c.Request.Method,
@@ -82,10 +81,10 @@ func LogWithContext(c *gin.Context) *logrus.Entry {
 	fields := logrus.Fields{
 		"request_id": GetRequestID(c),
 	}
-	
+
 	if userID := GetUserID(c); userID != "" {
 		fields["user_id"] = userID
 	}
-	
+
 	return logrus.WithFields(fields)
 }

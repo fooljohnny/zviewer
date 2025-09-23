@@ -1,0 +1,70 @@
+{
+  "name": "ZViewer",
+  "description": "Multimedia viewer with glassmorphism design",
+  "version": "1.0.0",
+  "icons": {
+    "sizes": [
+      {
+        "size": "16x16",
+        "file": "zviewer-logo-16.png",
+        "usage": "Windows taskbar, small UI elements"
+      },
+      {
+        "size": "32x32", 
+        "file": "zviewer-logo-32.png",
+        "usage": "Windows taskbar, navigation bars"
+      },
+      {
+        "size": "48x48",
+        "file": "zviewer-logo-48.png", 
+        "usage": "Windows desktop shortcuts"
+      },
+      {
+        "size": "64x64",
+        "file": "zviewer-logo-64.png",
+        "usage": "Standard application icon"
+      },
+      {
+        "size": "128x128",
+        "file": "zviewer-logo-128.png",
+        "usage": "High DPI displays, large UI elements"
+      },
+      {
+        "size": "256x256",
+        "file": "zviewer-logo-256.png",
+        "usage": "Windows large icons, macOS Retina"
+      },
+      {
+        "size": "512x512",
+        "file": "zviewer-logo-512.png",
+        "usage": "App store, high resolution displays"
+      }
+    ],
+    "formats": {
+      "svg": "Vector format for all sizes",
+      "png": "Raster format for specific sizes",
+      "ico": "Windows icon format",
+      "icns": "macOS icon format"
+    },
+    "variants": {
+      "light": "For dark backgrounds",
+      "dark": "For light backgrounds", 
+      "monochrome": "For single color usage"
+    }
+  },
+  "flutter_config": {
+    "android": {
+      "adaptive_icon": {
+        "foreground": "zviewer-logo-512.png",
+        "background": "#007AFF"
+      },
+      "icon_sizes": ["48", "72", "96", "144", "192"]
+    },
+    "ios": {
+      "icon_sizes": ["20", "29", "40", "58", "60", "76", "80", "87", "120", "152", "167", "180", "1024"]
+    },
+    "windows": {
+      "icon_sizes": ["16", "24", "32", "48", "64", "128", "256"]
+    }
+  }
+}

@@ -36,7 +36,15 @@ class CommentProvider with ChangeNotifier {
       _comments = comments;
       notifyListeners();
     } catch (e) {
-      _setError('Failed to load comments: ${e.toString()}');
+      // Only show error for actual network/server errors, not auth issues
+      if (e.toString().contains('Authentication required')) {
+        // Clear comments and don't show error for auth issues
+        _comments = [];
+        _clearError();
+      } else {
+        _setError('Failed to load comments: ${e.toString()}');
+      }
+      notifyListeners();
     } finally {
       _setLoading(false);
     }

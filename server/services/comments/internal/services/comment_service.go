@@ -289,20 +289,20 @@ func (s *CommentService) validateCommentContent(content string) error {
 func (s *CommentService) sanitizeContent(content string) string {
 	// Trim whitespace
 	content = strings.TrimSpace(content)
-	
+
 	// HTML escape to prevent XSS attacks
 	content = html.EscapeString(content)
-	
+
 	// Remove excessive whitespace
 	re := regexp.MustCompile(`\s+`)
 	content = re.ReplaceAllString(content, " ")
-	
+
 	// Remove potentially dangerous HTML tags and attributes
 	dangerousTags := []string{"<script", "</script>", "<iframe", "</iframe>", "<object", "</object>", "<embed", "</embed>"}
 	for _, tag := range dangerousTags {
 		content = strings.ReplaceAll(content, tag, "")
 	}
-	
+
 	return content
 }
 
@@ -312,14 +312,14 @@ func (s *CommentService) containsProfanity(content string) bool {
 	profanityWords := []string{
 		"spam", "scam", "fake", "bot", // Add more as needed
 	}
-	
+
 	content = strings.ToLower(content)
 	for _, word := range profanityWords {
 		if strings.Contains(content, word) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -329,8 +329,6 @@ func (s *CommentService) ModerateComment(commentID string, action string, reason
 	if err != nil {
 		return err
 	}
-
-	previousStatus := comment.Status
 
 	switch action {
 	case "approve":

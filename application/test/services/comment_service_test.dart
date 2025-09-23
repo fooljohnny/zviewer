@@ -15,7 +15,7 @@ void main() {
         const message = 'Test error message';
 
         // Act
-        final exception = CommentException(message);
+        const exception = CommentException(message);
 
         // Assert
         expect(exception.message, equals(message));

@@ -28,7 +28,7 @@ void main() {
         // and test the actual service implementation
         
         // Mock response
-        final mockResponse = '''
+        const mockResponse = '''
         {
           "content": [
             {

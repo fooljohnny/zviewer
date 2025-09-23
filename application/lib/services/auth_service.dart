@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../models/auth_response.dart';
+import '../config/api_config.dart';
 
 class AuthService {
-  static const String _baseUrl = 'https://api.zviewer.com'; // TODO: Replace with actual API URL
+  static String get _baseUrl => ApiConfig.authUrl;
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
@@ -14,7 +15,7 @@ class AuthService {
   Future<AuthResponse> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/login'),
+        Uri.parse('$_baseUrl/login'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -42,7 +43,7 @@ class AuthService {
   Future<AuthResponse> register(String email, String password, String confirmPassword) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/register'),
+        Uri.parse('$_baseUrl/register'),
         headers: {
           'Content-Type': 'application/json',
         },

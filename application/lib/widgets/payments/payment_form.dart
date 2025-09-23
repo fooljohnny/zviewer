@@ -118,7 +118,7 @@ class _PaymentFormState extends State<PaymentForm> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedCurrency,
+                        initialValue: _selectedCurrency,
                         decoration: const InputDecoration(
                           labelText: 'Currency',
                           border: OutlineInputBorder(),

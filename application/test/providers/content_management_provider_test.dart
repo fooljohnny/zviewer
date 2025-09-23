@@ -6,7 +6,6 @@ import 'package:zviewer/providers/auth_provider.dart';
 import 'package:zviewer/services/content_management_service.dart';
 import 'package:zviewer/models/content_item.dart';
 import 'package:zviewer/models/content_category.dart';
-import 'package:zviewer/models/admin_action.dart';
 
 import 'content_management_provider_test.mocks.dart';
 
@@ -110,6 +109,8 @@ void main() {
 
         when(mockService.approveContent('content1'))
             .thenAnswer((_) async => mockResponse);
+        when(mockService.getRecentAdminActions(limit: 50, adminId: null))
+            .thenAnswer((_) async => []);
 
         await provider.approveContent('content1');
 
@@ -124,6 +125,8 @@ void main() {
 
         when(mockService.rejectContent('content1', 'Inappropriate content'))
             .thenAnswer((_) async => mockResponse);
+        when(mockService.getRecentAdminActions(limit: 50, adminId: null))
+            .thenAnswer((_) async => []);
 
         await provider.rejectContent('content1', 'Inappropriate content');
 
@@ -138,6 +141,8 @@ void main() {
 
         when(mockService.deleteContent('content1', 'Spam content'))
             .thenAnswer((_) async => mockResponse);
+        when(mockService.getRecentAdminActions(limit: 50, adminId: null))
+            .thenAnswer((_) async => []);
 
         await provider.deleteContent('content1', 'Spam content');
 

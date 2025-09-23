@@ -23,7 +23,7 @@ class ContentManagementProvider extends ChangeNotifier {
   String _userFilter = '';
   DateTime? _startDate;
   DateTime? _endDate;
-  Set<String> _selectedCategories = {};
+  final Set<String> _selectedCategories = {};
 
   // Sorting state
   String _sortBy = 'uploadedAt';

@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/comment.dart';
+import '../config/api_config.dart';
 
 class CommentService {
-  static const String _baseUrl = 'https://api.zviewer.com/api';
+  static String get _baseUrl => ApiConfig.commentsUrl;
   
   final http.Client _client;
   final String? _authToken;
@@ -20,7 +21,7 @@ class CommentService {
     required String mediaId,
   }) async {
     if (_authToken == null) {
-      throw CommentException('Authentication required to post comments');
+      throw const CommentException('Authentication required to post comments');
     }
 
     try {
@@ -40,7 +41,7 @@ class CommentService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return Comment.fromJson(data);
       } else if (response.statusCode == 401) {
-        throw CommentException('Authentication failed');
+        throw const CommentException('Authentication failed');
       } else if (response.statusCode == 400) {
         final error = jsonDecode(response.body) as Map<String, dynamic>;
         throw CommentException(error['message'] ?? 'Invalid comment data');
@@ -56,7 +57,8 @@ class CommentService {
   /// Get comments for a specific media item
   Future<List<Comment>> getComments(String mediaId) async {
     if (_authToken == null) {
-      throw CommentException('Authentication required to view comments');
+      // Return empty list instead of throwing exception for better UX
+      return [];
     }
 
     try {
@@ -74,7 +76,7 @@ class CommentService {
             .map((json) => Comment.fromJson(json as Map<String, dynamic>))
             .toList();
       } else if (response.statusCode == 401) {
-        throw CommentException('Authentication failed');
+        throw const CommentException('Authentication failed');
       } else if (response.statusCode == 404) {
         return []; // No comments found
       } else {
@@ -92,7 +94,7 @@ class CommentService {
     required String content,
   }) async {
     if (_authToken == null) {
-      throw CommentException('Authentication required to update comments');
+      throw const CommentException('Authentication required to update comments');
     }
 
     try {
@@ -111,11 +113,11 @@ class CommentService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return Comment.fromJson(data);
       } else if (response.statusCode == 401) {
-        throw CommentException('Authentication failed');
+        throw const CommentException('Authentication failed');
       } else if (response.statusCode == 403) {
-        throw CommentException('Not authorized to update this comment');
+        throw const CommentException('Not authorized to update this comment');
       } else if (response.statusCode == 404) {
-        throw CommentException('Comment not found');
+        throw const CommentException('Comment not found');
       } else if (response.statusCode == 400) {
         final error = jsonDecode(response.body) as Map<String, dynamic>;
         throw CommentException(error['message'] ?? 'Invalid comment data');
@@ -131,7 +133,7 @@ class CommentService {
   /// Delete a comment
   Future<void> deleteComment(String commentId) async {
     if (_authToken == null) {
-      throw CommentException('Authentication required to delete comments');
+      throw const CommentException('Authentication required to delete comments');
     }
 
     try {
@@ -145,11 +147,11 @@ class CommentService {
       if (response.statusCode == 204) {
         return; // Success
       } else if (response.statusCode == 401) {
-        throw CommentException('Authentication failed');
+        throw const CommentException('Authentication failed');
       } else if (response.statusCode == 403) {
-        throw CommentException('Not authorized to delete this comment');
+        throw const CommentException('Not authorized to delete this comment');
       } else if (response.statusCode == 404) {
-        throw CommentException('Comment not found');
+        throw const CommentException('Comment not found');
       } else {
         throw CommentException('Failed to delete comment: ${response.statusCode}');
       }

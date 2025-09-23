@@ -6,6 +6,7 @@ import '../comments/comment_input.dart';
 import '../comments/comment_list.dart';
 import '../../providers/comment_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/comment_service.dart';
 
 class MultimediaViewer extends StatefulWidget {
   final String mediaPath;
@@ -25,6 +26,7 @@ class MultimediaViewer extends StatefulWidget {
 
 class _MultimediaViewerState extends State<MultimediaViewer> {
   late String _mediaId;
+  late CommentProvider _commentProvider;
 
   @override
   void initState() {
@@ -32,16 +34,22 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
     // Generate a media ID based on the file path
     _mediaId = widget.mediaPath.hashCode.toString();
     
+    // Initialize comment provider with auth token
+    final authProvider = context.read<AuthProvider>();
+    _commentProvider = CommentProvider(
+      commentService: CommentService(authToken: authProvider.user?.id),
+    );
+    
     // Load comments for this media
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CommentProvider>().loadComments(_mediaId);
+      _commentProvider.loadComments(_mediaId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, CommentProvider>(
-      builder: (context, authProvider, commentProvider, child) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
         final isAuthenticated = authProvider.isAuthenticated;
         
         return Column(
@@ -60,18 +68,18 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
                   CommentInput(
                     mediaId: _mediaId,
                     isAuthenticated: isAuthenticated,
-                    isLoading: commentProvider.isLoading,
-                    error: commentProvider.error,
+                    isLoading: _commentProvider.isLoading,
+                    error: _commentProvider.error,
                     onSubmit: (content) => _submitComment(content),
-                    onClearError: () => commentProvider.clearError(),
+                    onClearError: () => _commentProvider.clearError(),
                   ),
                   // Comment list
                   Expanded(
                     child: CommentList(
-                      comments: commentProvider.comments,
-                      isLoading: commentProvider.isLoading,
-                      error: commentProvider.error,
-                      onRetry: () => commentProvider.refreshComments(),
+                      comments: _commentProvider.comments,
+                      isLoading: _commentProvider.isLoading,
+                      error: _commentProvider.error,
+                      onRetry: () => _commentProvider.refreshComments(),
                       onEditComment: (comment) => _editComment(comment),
                       onDeleteComment: (comment) => _deleteComment(comment),
                       canEdit: isAuthenticated,
@@ -127,7 +135,7 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
   }
 
   Future<void> _submitComment(String content) async {
-    final success = await context.read<CommentProvider>().postComment(
+    final success = await _commentProvider.postComment(
       content,
       _mediaId,
     );
@@ -172,7 +180,7 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
     );
 
     if (confirmed == true && mounted) {
-      final success = await context.read<CommentProvider>().deleteComment(comment.id);
+      final success = await _commentProvider.deleteComment(comment.id);
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,5 +191,11 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _commentProvider.dispose();
+    super.dispose();
   }
 }

@@ -40,10 +40,13 @@ class _ImageViewerState extends State<ImageViewer> {
       // Simulate loading time for demonstration
       await Future.delayed(const Duration(milliseconds: 500));
       
-      // In a real implementation, you would load the actual image
-      // For now, we'll assume the image loads successfully
+      // Check if the asset exists by trying to load it
+      // For demo purposes, we'll simulate a missing image scenario
+      // In a real app, you would check if the file exists first
       setState(() {
         _isLoading = false;
+        _hasError = true; // Simulate no image available
+        _errorMessage = 'No image available';
       });
     } catch (e) {
       setState(() {
@@ -70,17 +73,27 @@ class _ImageViewerState extends State<ImageViewer> {
     }
 
     if (_hasError) {
+      // Check if it's a "no image available" scenario
+      final isNoImage = _errorMessage == 'No image available';
+      
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text(
-              'Failed to load image',
-              style: TextStyle(fontSize: 18),
+            Icon(
+              isNoImage ? Icons.image_not_supported : Icons.error,
+              size: 64,
+              color: isNoImage ? Colors.grey[400] : Colors.red,
             ),
-            if (_errorMessage != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              isNoImage ? 'No Image Available' : 'Failed to load image',
+              style: TextStyle(
+                fontSize: 18,
+                color: isNoImage ? Colors.grey[600] : Colors.red[700],
+              ),
+            ),
+            if (_errorMessage != null && !isNoImage) ...[
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
@@ -88,11 +101,24 @@ class _ImageViewerState extends State<ImageViewer> {
                 textAlign: TextAlign.center,
               ),
             ],
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadImage,
-              child: const Text('Retry'),
-            ),
+            if (isNoImage) ...[
+              const SizedBox(height: 8),
+              Text(
+                'This media item doesn\'t have an image to display',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (!isNoImage) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadImage,
+                child: const Text('Retry'),
+              ),
+            ],
           ],
         ),
       );

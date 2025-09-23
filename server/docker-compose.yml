@@ -3,6 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
+    # 如果网络有问题，可以尝试使用以下镜像之一：
+    # image: registry.cn-beijing.aliyuncs.com/library/postgres:15-alpine
+    # image: ccr.ccs.tencentyun.com/library/postgres:15-alpine
     environment:
       POSTGRES_DB: zviewer
       POSTGRES_USER: zviewer
