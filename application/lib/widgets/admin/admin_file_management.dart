@@ -238,6 +238,11 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
                                     _searchQuery = '';
                                   });
                                 },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 32,
+                                  minHeight: 32,
+                                ),
                               )
                             : null,
                         border: InputBorder.none,
@@ -245,7 +250,7 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
                           horizontal: 12,
                           vertical: 12,
                         ),
-                        isDense: false,
+                        isDense: true,
                         isCollapsed: false,
                       ),
                       onChanged: (value) {

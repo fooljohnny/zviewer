@@ -230,9 +230,9 @@ func (s *MediaService) validateFile(file *multipart.FileHeader) error {
 		return fmt.Errorf("unsupported file type: %s", ext)
 	}
 
-	// Validate MIME type
+	// Validate MIME type (allow application/octet-stream for Flutter uploads)
 	contentType := file.Header.Get("Content-Type")
-	if !s.isValidMimeType(contentType) {
+	if contentType != "" && contentType != "application/octet-stream" && !s.isValidMimeType(contentType) {
 		return fmt.Errorf("invalid MIME type: %s", contentType)
 	}
 

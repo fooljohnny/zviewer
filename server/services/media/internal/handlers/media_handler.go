@@ -55,17 +55,22 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		return
 	}
 
-	// Parse request data
-	var req models.MediaUploadRequest
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request data"})
-		return
+	// Parse request data with default values
+	req := models.MediaUploadRequest{
+		Title:       c.PostForm("title"),
+		Description: c.PostForm("description"),
+		Categories:  []string{},
+	}
+
+	// Parse categories from form data
+	if categoriesStr := c.PostForm("categories"); categoriesStr != "" {
+		req.Categories = strings.Split(categoriesStr, ",")
 	}
 
 	// Upload multiple media files
-	var uploadedMedia []models.Media
+	var uploadedMedia []models.MediaItem
 	var errors []string
-	
+
 	for i, file := range files {
 		// Create individual request for each file
 		fileReq := req
@@ -73,10 +78,12 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 			// For multiple files, use individual metadata if available
 			fileReq.Title = c.PostForm(fmt.Sprintf("files[%d].title", i))
 			fileReq.Description = c.PostForm(fmt.Sprintf("files[%d].description", i))
-			fileReq.Category = c.PostForm(fmt.Sprintf("files[%d].category", i))
-			fileReq.Tags = strings.Split(c.PostForm(fmt.Sprintf("files[%d].tags", i)), ",")
+			categoryStr := c.PostForm(fmt.Sprintf("files[%d].category", i))
+			if categoryStr != "" {
+				fileReq.Categories = []string{categoryStr}
+			}
 		}
-		
+
 		// If individual metadata is not available, use the main request
 		if fileReq.Title == "" {
 			fileReq.Title = req.Title
@@ -84,11 +91,8 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		if fileReq.Description == "" {
 			fileReq.Description = req.Description
 		}
-		if fileReq.Category == "" {
-			fileReq.Category = req.Category
-		}
-		if len(fileReq.Tags) == 0 {
-			fileReq.Tags = req.Tags
+		if len(fileReq.Categories) == 0 {
+			fileReq.Categories = req.Categories
 		}
 
 		// Upload single media
@@ -98,18 +102,18 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 			errors = append(errors, fmt.Sprintf("Failed to upload %s: %v", file.Filename, err))
 			continue
 		}
-		
+
 		uploadedMedia = append(uploadedMedia, *media)
 	}
 
 	// Prepare response
 	response := gin.H{
-		"success": len(uploadedMedia) > 0,
-		"message": fmt.Sprintf("Successfully uploaded %d of %d files", len(uploadedMedia), len(files)),
-		"uploaded_media": uploadedMedia,
+		"success":            len(uploadedMedia) > 0,
+		"message":            fmt.Sprintf("Successfully uploaded %d of %d files", len(uploadedMedia), len(files)),
+		"uploaded_media":     uploadedMedia,
 		"successful_uploads": len(uploadedMedia),
-		"failed_uploads": len(errors),
-		"errors": errors,
+		"failed_uploads":     len(errors),
+		"errors":             errors,
 	}
 
 	if len(uploadedMedia) > 0 {

@@ -30,10 +30,11 @@ func (r *MediaRepository) Create(media *models.MediaItem) error {
 	`
 
 	metadataJSON, _ := json.Marshal(media.Metadata)
+	categoriesJSON, _ := json.Marshal(media.Categories)
 
 	_, err := r.db.Exec(query,
 		media.ID, media.Title, media.Description, media.FilePath, media.Type,
-		media.UserID, media.UserName, media.Status, media.Categories,
+		media.UserID, media.UserName, media.Status, categoriesJSON,
 		media.UploadedAt, metadataJSON, media.FileSize, media.MimeType, media.ThumbnailPath,
 	)
 
@@ -51,10 +52,11 @@ func (r *MediaRepository) GetByID(id string) (*models.MediaItem, error) {
 
 	var media models.MediaItem
 	var metadataJSON []byte
+	var categoriesJSON []byte
 
 	err := r.db.QueryRow(query, id).Scan(
 		&media.ID, &media.Title, &media.Description, &media.FilePath, &media.Type,
-		&media.UserID, &media.UserName, &media.Status, &media.Categories,
+		&media.UserID, &media.UserName, &media.Status, &categoriesJSON,
 		&media.UploadedAt, &media.ApprovedAt, &media.ApprovedBy,
 		&media.RejectionReason, &metadataJSON, &media.FileSize, &media.MimeType, &media.ThumbnailPath,
 	)
@@ -71,6 +73,11 @@ func (r *MediaRepository) GetByID(id string) (*models.MediaItem, error) {
 		json.Unmarshal(metadataJSON, &media.Metadata)
 	}
 
+	// Parse categories JSON
+	if len(categoriesJSON) > 0 {
+		json.Unmarshal(categoriesJSON, &media.Categories)
+	}
+
 	return &media, nil
 }
 
@@ -83,9 +90,10 @@ func (r *MediaRepository) Update(media *models.MediaItem) error {
 	`
 
 	metadataJSON, _ := json.Marshal(media.Metadata)
+	categoriesJSON, _ := json.Marshal(media.Categories)
 
 	_, err := r.db.Exec(query,
-		media.ID, media.Title, media.Description, media.Categories,
+		media.ID, media.Title, media.Description, categoriesJSON,
 		metadataJSON, media.ThumbnailPath,
 	)
 
@@ -135,10 +143,11 @@ func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int
 	for rows.Next() {
 		var media models.MediaItem
 		var metadataJSON []byte
+		var categoriesJSON []byte
 
 		err := rows.Scan(
 			&media.ID, &media.Title, &media.Description, &media.FilePath, &media.Type,
-			&media.UserID, &media.UserName, &media.Status, &media.Categories,
+			&media.UserID, &media.UserName, &media.Status, &categoriesJSON,
 			&media.UploadedAt, &media.ApprovedAt, &media.ApprovedBy,
 			&media.RejectionReason, &metadataJSON, &media.FileSize, &media.MimeType, &media.ThumbnailPath,
 		)
@@ -149,6 +158,11 @@ func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int
 		// Parse metadata JSON
 		if len(metadataJSON) > 0 {
 			json.Unmarshal(metadataJSON, &media.Metadata)
+		}
+
+		// Parse categories JSON
+		if len(categoriesJSON) > 0 {
+			json.Unmarshal(categoriesJSON, &media.Categories)
 		}
 
 		mediaItems = append(mediaItems, media)

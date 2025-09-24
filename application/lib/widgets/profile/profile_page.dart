@@ -23,20 +23,23 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  late AuthProvider _authProvider;
 
   @override
   void initState() {
     super.initState();
+    // Store reference to auth provider
+    _authProvider = context.read<AuthProvider>();
     // Listen to authentication state changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthProvider>().addListener(_onAuthStateChanged);
+      _authProvider.addListener(_onAuthStateChanged);
     });
   }
 
   @override
   void dispose() {
     // Remove the listener to prevent memory leaks
-    context.read<AuthProvider>().removeListener(_onAuthStateChanged);
+    _authProvider.removeListener(_onAuthStateChanged);
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();

@@ -39,6 +39,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// Run database migrations
+	if err := database.RunMigrations(db, "migrations"); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
 	// Initialize repositories
 	mediaRepo := repositories.NewMediaRepository(db)
 

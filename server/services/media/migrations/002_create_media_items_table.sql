@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS media_items (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     user_name VARCHAR(255) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    categories TEXT[] DEFAULT '{}',
+    categories JSONB DEFAULT '[]',
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     approved_at TIMESTAMP WITH TIME ZONE,
     approved_by UUID REFERENCES users(id),
