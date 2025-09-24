@@ -1,11 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
 import 'package:zviewer/services/content_management_service.dart';
 import 'package:zviewer/models/content_item.dart';
-import 'package:zviewer/models/content_category.dart';
-import 'package:zviewer/models/admin_action.dart';
 
 import 'content_management_service_test.mocks.dart';
 

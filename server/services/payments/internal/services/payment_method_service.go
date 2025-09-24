@@ -8,7 +8,6 @@ import (
 	"zviewer-payments-service/internal/models"
 	"zviewer-payments-service/internal/repositories"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -48,18 +47,21 @@ func (s *PaymentMethodService) CreatePaymentMethod(ctx context.Context, userID s
 
 	// Create payment method model
 	paymentMethod := &models.PaymentMethod{
-		UserID:               userID,
-		Type:                 req.Type,
+		UserID:                userID,
+		Type:                  req.Type,
 		StripePaymentMethodID: pm.ID,
-		IsDefault:            req.IsDefault,
+		IsDefault:             req.IsDefault,
 	}
 
 	// Set card-specific fields
 	if pm.Card != nil {
 		paymentMethod.Last4 = pm.Card.Last4
-		paymentMethod.Brand = &pm.Card.Brand
-		paymentMethod.ExpMonth = &pm.Card.ExpMonth
-		paymentMethod.ExpYear = &pm.Card.ExpYear
+		brand := string(pm.Card.Brand)
+		paymentMethod.Brand = &brand
+		expMonth := int(pm.Card.ExpMonth)
+		paymentMethod.ExpMonth = &expMonth
+		expYear := int(pm.Card.ExpYear)
+		paymentMethod.ExpYear = &expYear
 	}
 
 	// Generate ID and set timestamps

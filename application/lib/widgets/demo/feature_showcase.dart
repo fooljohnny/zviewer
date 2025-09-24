@@ -300,7 +300,7 @@ class _FeatureShowcaseState extends State<FeatureShowcase>
       );
     });
 
-    return Container(
+    return SizedBox(
       height: 300,
       child: ResponsiveWaterfallGrid(
         items: demoItems,
@@ -314,11 +314,11 @@ class _FeatureShowcaseState extends State<FeatureShowcase>
   }
 
   Widget _buildGlassmorphismDemo() {
-    return Row(
+    return const Row(
       children: [
         Expanded(
           child: GlassmorphismCard(
-            child: const Column(
+            child: Column(
               children: [
                 Icon(Icons.star, color: Colors.white, size: 32),
                 SizedBox(height: 8),
@@ -330,12 +330,12 @@ class _FeatureShowcaseState extends State<FeatureShowcase>
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: GlassmorphismCard(
             blurRadius: 30,
             opacity: 0.2,
-            child: const Column(
+            child: Column(
               children: [
                 Icon(Icons.blur_on, color: Colors.white, size: 32),
                 SizedBox(height: 8),
@@ -347,12 +347,12 @@ class _FeatureShowcaseState extends State<FeatureShowcase>
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: GlassmorphismCard(
             blurRadius: 10,
             opacity: 0.1,
-            child: const Column(
+            child: Column(
               children: [
                 Icon(Icons.visibility, color: Colors.white, size: 32),
                 SizedBox(height: 8),

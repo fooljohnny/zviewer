@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../providers/content_management_provider.dart';
+import '../../services/content_management_service.dart';
 import '../common/glassmorphism_card.dart';
+import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 
 /// 管理文件页面
@@ -40,8 +43,7 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: _buildBackgroundDecoration(),
+      body: ModernBackground(
         child: SafeArea(
           child: Column(
             children: [
@@ -63,19 +65,6 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
     );
   }
 
-  BoxDecoration _buildBackgroundDecoration() {
-    return const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF1C1C1E),
-          Color(0xFF2C2C2E),
-          Color(0xFF3A3A3C),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeader() {
     return Container(
@@ -106,35 +95,98 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
               ],
             ),
           ),
-          _buildStatsCard(),
+          // 关闭按钮 - 右上角
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            child: IconButton(
+              onPressed: () {
+                // 返回到首页
+                Navigator.of(context).pushReplacementNamed('/');
+              },
+              icon: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCard() {
+  Widget _buildFileStats() {
     return Consumer<ContentManagementProvider>(
       builder: (context, provider, child) {
-        return GlassmorphismCard(
-          child: Column(
-            children: [
-              Text(
-                '${provider.content.length}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+        return Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
                 ),
               ),
-              Text(
-                '总文件数',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.7),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.folder,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '共 ${provider.content.length} 个文件',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.8),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // 可以添加其他统计信息，比如筛选后的数量
+            if (_searchQuery.isNotEmpty || _selectedCategory != '全部')
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.blue.withOpacity(0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.filter_alt,
+                      size: 16,
+                      color: Colors.blue.withOpacity(0.8),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '已筛选',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+          ],
         );
       },
     );
@@ -142,109 +194,173 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
 
   Widget _buildSearchAndFilterBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         children: [
-          // 搜索框
+          // 搜索和筛选行
           Row(
             children: [
+              // 搜索框
               Expanded(
-                child: GlassmorphismCard(
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: '搜索文件...',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.white.withOpacity(0.7),
+                child: SizedBox(
+                  height: 48, // 固定高度，与筛选按钮保持一致
+                  child: GlassmorphismCard(
+                    child: TextField(
+                      controller: _searchController,
+                      textAlignVertical: TextAlignVertical.center, // 垂直居中对齐
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.0, // 设置行高为1.0，避免额外空间
                       ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      decoration: InputDecoration(
+                        hintText: '搜索文件...',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 14,
+                          height: 1.0,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.white.withOpacity(0.7),
+                          size: 20,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.white.withOpacity(0.7),
+                                  size: 18,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        isDense: false,
+                        isCollapsed: false,
                       ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               // 筛选按钮
-              GlassmorphismButton(
-                onPressed: _showFilterDialog,
-                child: const Icon(
-                  Icons.filter_list,
-                  color: Colors.white,
+              SizedBox(
+                height: 48, // 固定高度，与搜索框保持一致
+                child: GlassmorphismButton(
+                  onPressed: _showFilterDialog,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        '筛选',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
           
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          
+          // 文件统计信息
+          _buildFileStats(),
+          
+          const SizedBox(height: 12),
           
           // 快速筛选标签
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _categories.map((category) {
-                final isSelected = _selectedCategory == category;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedCategory = category;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.blue.withOpacity(0.8)
-                            : Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.blue
-                              : Colors.white.withOpacity(0.3),
+          SizedBox(
+            height: 36,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _categories.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? LinearGradient(
+                                  colors: [
+                                    Colors.blue.withOpacity(0.8),
+                                    Colors.blue.withOpacity(0.6),
+                                  ],
+                                )
+                              : null,
+                          color: isSelected
+                              ? null
+                              : Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.blue.withOpacity(0.8)
+                                : Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
@@ -544,8 +660,12 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: _sortBy,
-              decoration: const InputDecoration(labelText: '排序方式'),
+              initialValue: _sortBy,
+              decoration: const InputDecoration(
+                labelText: '排序方式',
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                isDense: true,
+              ),
               items: _sortOptions.map((option) {
                 return DropdownMenuItem(
                   value: option,
@@ -644,12 +764,21 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: '文件名'),
+              decoration: const InputDecoration(
+                labelText: '文件名',
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                isDense: true,
+              ),
             ),
+            const SizedBox(height: 8),
             TextField(
               controller: descriptionController,
-              decoration: const InputDecoration(labelText: '描述'),
-              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: '描述',
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                isDense: true,
+              ),
+              maxLines: 2,
             ),
           ],
         ),
@@ -706,8 +835,256 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
   }
 
   void _showAddFileDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('添加文件功能开发中')),
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.transparent,
+          content: GlassmorphismCard(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.cloud_upload,
+                    size: 48,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '上传文件',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '选择要上传的多媒体文件',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildUploadButton(
+                          icon: Icons.image,
+                          label: '图片',
+                          onTap: () => _pickFiles(FileType.image),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildUploadButton(
+                          icon: Icons.videocam,
+                          label: '视频',
+                          onTap: () => _pickFiles(FileType.video),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildUploadButton(
+                          icon: Icons.audiotrack,
+                          label: '音频',
+                          onTap: () => _pickFiles(FileType.audio),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildUploadButton(
+                    icon: Icons.folder_open,
+                    label: '所有文件',
+                    onTap: () => _pickFiles(FileType.any),
+                    isWide: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      '取消',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  Widget _buildUploadButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isWide = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isWide ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFiles(FileType fileType) async {
+    try {
+      Navigator.of(context).pop(); // 关闭对话框
+      
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: fileType,
+        allowMultiple: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        await _uploadFiles(result.files);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('文件选择失败: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _uploadFiles(List<PlatformFile> files) async {
+    try {
+      // 显示上传进度
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.transparent,
+          content: GlassmorphismCard(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '正在上传 ${files.length} 个文件...',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 转换文件格式
+      final uploadFiles = files.map((file) => UploadFile(
+        path: file.path ?? '',
+        name: file.name,
+        title: file.name,
+        description: '',
+        category: _getFileCategory(file.extension),
+        tags: [],
+      )).toList();
+
+      // 调用实际上传API
+      await context.read<ContentManagementProvider>().uploadFiles(uploadFiles);
+
+      // 关闭进度对话框
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        // 显示成功消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('成功上传 ${files.length} 个文件'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // 关闭进度对话框
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('上传失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getFileCategory(String? extension) {
+    if (extension == null) return '其他';
+    
+    switch (extension.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+      case 'webp':
+        return '图片';
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+      case 'wmv':
+      case 'flv':
+      case 'webm':
+        return '视频';
+      case 'mp3':
+      case 'wav':
+      case 'flac':
+      case 'aac':
+      case 'ogg':
+        return '音频';
+      case 'pdf':
+      case 'doc':
+      case 'docx':
+      case 'txt':
+      case 'rtf':
+        return '文档';
+      default:
+        return '其他';
+    }
   }
 }

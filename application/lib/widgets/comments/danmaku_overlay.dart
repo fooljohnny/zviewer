@@ -139,7 +139,7 @@ class _DanmakuOverlayState extends State<DanmakuOverlay>
                 color: Colors.black.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.comment_outlined,
                 color: Colors.white,
                 size: 20,
@@ -189,7 +189,7 @@ class _DanmakuOverlayState extends State<DanmakuOverlay>
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -229,11 +229,11 @@ class DanmakuAnimationController extends AnimationController {
   final double initialTop;
 
   DanmakuAnimationController({
-    required TickerProvider vsync,
-    required Duration duration,
+    required super.vsync,
+    required Duration super.duration,
     required this.comment,
     required this.initialTop,
-  }) : super(vsync: vsync, duration: duration);
+  });
 
   late Animation<double> animation;
 
@@ -401,7 +401,7 @@ class DanmakuSettings extends StatelessWidget {
               Switch(
                 value: isVisible,
                 onChanged: onVisibilityChanged,
-                activeColor: Colors.blue,
+                activeThumbColor: Colors.blue,
               ),
             ],
           ),

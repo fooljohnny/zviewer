@@ -194,7 +194,7 @@ class _EnhancedDanmakuOverlayState extends State<EnhancedDanmakuOverlay>
               ),
             ),
           );
-        }).toList(),
+        }),
         
         // 控制按钮
         _buildControlButtons(),
@@ -333,11 +333,11 @@ class DanmakuAnimationController extends AnimationController {
   final double initialTop;
 
   DanmakuAnimationController({
-    required TickerProvider vsync,
-    required Duration duration,
+    required super.vsync,
+    required Duration super.duration,
     required this.comment,
     required this.initialTop,
-  }) : super(vsync: vsync, duration: duration);
+  });
 
   late Animation<double> animation;
 

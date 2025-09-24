@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../common/glassmorphism_card.dart';
 import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 import 'responsive_waterfall_grid.dart';
@@ -19,9 +18,6 @@ class MainGalleryPage extends StatefulWidget {
 class _MainGalleryPageState extends State<MainGalleryPage>
     with TickerProviderStateMixin {
   late AnimationController _backgroundAnimationController;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  bool _showSearch = false;
 
   @override
   void initState() {
@@ -33,7 +29,6 @@ class _MainGalleryPageState extends State<MainGalleryPage>
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -72,24 +67,7 @@ class _MainGalleryPageState extends State<MainGalleryPage>
 
 
   Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // 搜索按钮
-          GlassmorphismButton(
-            onPressed: _toggleSearch,
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              _showSearch ? Icons.close : Icons.search,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink(); // 移除搜索按钮，返回空组件
   }
 
   Widget _buildGalleryContent() {
@@ -99,8 +77,7 @@ class _MainGalleryPageState extends State<MainGalleryPage>
           return _buildLoadingState();
         }
 
-        final filteredContent = _filterContent(contentProvider.content);
-        final waterfallItems = _convertToWaterfallItems(filteredContent);
+        final waterfallItems = _convertToWaterfallItems(contentProvider.content);
 
         return ResponsiveWaterfallGrid(
           items: waterfallItems,
@@ -145,27 +122,6 @@ class _MainGalleryPageState extends State<MainGalleryPage>
   }
 
 
-  void _toggleSearch() {
-    setState(() {
-      _showSearch = !_showSearch;
-      if (!_showSearch) {
-        _searchQuery = '';
-        _searchController.clear();
-      }
-    });
-  }
-
-  List<ContentItem> _filterContent(List<ContentItem> content) {
-    if (_searchQuery.isEmpty) return content;
-    
-    return content.where((item) {
-      final title = item.title.toLowerCase();
-      final description = item.description.toLowerCase();
-      final query = _searchQuery.toLowerCase();
-      
-      return title.contains(query) || description.contains(query);
-    }).toList();
-  }
 
   List<WaterfallItem> _convertToWaterfallItems(List<ContentItem> content) {
     return content.map((item) {

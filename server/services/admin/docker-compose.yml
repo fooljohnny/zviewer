@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  admin-service:
+    build: .
+    ports:
+      - "8084:8084"
+    environment:
+      - ADMIN_PORT=8084
+      - ADMIN_HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=zviewer
+      - DB_PASSWORD=password
+      - DB_NAME=zviewer
+      - DB_SSLMODE=disable
+      - JWT_SECRET=your-secret-key
+      - JWT_ISSUER=zviewer-admin
+      - USER_SERVICE_URL=http://user-service:8081
+      - MEDIA_SERVICE_URL=http://media-service:8082
+      - COMMENTS_SERVICE_URL=http://comments-service:8083
+      - PAYMENT_SERVICE_URL=http://payment-service:8085
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+    depends_on:
+      - postgres
+    networks:
+      - zviewer-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=zviewer
+      - POSTGRES_USER=zviewer
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - zviewer-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  zviewer-network:
+    external: true

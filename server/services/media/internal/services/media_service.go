@@ -16,8 +16,6 @@ import (
 	"zviewer-media-service/internal/repositories"
 	"zviewer-media-service/internal/storage"
 
-	"github.com/google/uuid"
-	"github.com/h2non/filetype"
 	"github.com/sirupsen/logrus"
 )
 
@@ -201,7 +199,7 @@ func (s *MediaService) DeleteMedia(ctx context.Context, id string, userID string
 // ListMedia retrieves media items with filtering and pagination
 func (s *MediaService) ListMedia(ctx context.Context, query models.MediaQuery) (*models.MediaListResponse, error) {
 	query.SetDefaults()
-	
+
 	mediaItems, total, err := s.mediaRepo.List(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list media: %w", err)
@@ -221,7 +219,7 @@ func (s *MediaService) validateFile(file *multipart.FileHeader) error {
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	isImage := s.isImageExtension(ext)
 	isVideo := s.isVideoExtension(ext)
-	
+
 	if isImage && file.Size > s.config.MaxImageSize {
 		return fmt.Errorf("image file too large: %d bytes (max: %d)", file.Size, s.config.MaxImageSize)
 	}
@@ -242,7 +240,7 @@ func (s *MediaService) validateFile(file *multipart.FileHeader) error {
 	if file.Filename == "" {
 		return fmt.Errorf("filename cannot be empty")
 	}
-	
+
 	// Check for directory traversal attempts
 	if strings.Contains(file.Filename, "..") || strings.Contains(file.Filename, "/") || strings.Contains(file.Filename, "\\") {
 		return fmt.Errorf("invalid filename: contains path traversal characters")
@@ -254,7 +252,7 @@ func (s *MediaService) validateFile(file *multipart.FileHeader) error {
 // determineMediaType determines if the file is an image or video
 func (s *MediaService) determineMediaType(filename, contentType string) models.MediaType {
 	ext := strings.ToLower(filepath.Ext(filename))
-	
+
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".webp":
 		return models.MediaTypeImage
@@ -277,13 +275,13 @@ func (s *MediaService) isValidMimeType(contentType string) bool {
 		"image/jpeg", "image/jpg", "image/png", "image/webp",
 		"video/mp4", "video/webm",
 	}
-	
+
 	for _, validType := range validTypes {
 		if contentType == validType {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -312,7 +310,7 @@ func (s *MediaService) isVideoExtension(ext string) bool {
 // processFileAsync processes file in background (thumbnails, metadata extraction)
 func (s *MediaService) processFileAsync(ctx context.Context, media *models.MediaItem) {
 	logrus.Infof("Processing file: %s", media.ID)
-	
+
 	// Get the file from storage
 	fileReader, err := s.storage.GetFile(ctx, media.FilePath)
 	if err != nil {
@@ -332,7 +330,7 @@ func (s *MediaService) processFileAsync(ctx context.Context, media *models.Media
 			logrus.Errorf("Failed to process image: %v", err)
 			return
 		}
-		
+
 		// Save thumbnail
 		if result.ThumbnailData != nil {
 			thumbPath := s.pathGenerator.GenerateThumbnailPath(media.FilePath)
@@ -343,7 +341,7 @@ func (s *MediaService) processFileAsync(ctx context.Context, media *models.Media
 				thumbnailPath = &thumbPath
 			}
 		}
-		
+
 		metadata = result.Metadata
 
 	case models.MediaTypeVideo:
@@ -352,7 +350,7 @@ func (s *MediaService) processFileAsync(ctx context.Context, media *models.Media
 			logrus.Errorf("Failed to process video: %v", err)
 			return
 		}
-		
+
 		// Save thumbnail
 		if result.ThumbnailData != nil {
 			thumbPath := s.pathGenerator.GenerateThumbnailPath(media.FilePath)
@@ -363,7 +361,7 @@ func (s *MediaService) processFileAsync(ctx context.Context, media *models.Media
 				thumbnailPath = &thumbPath
 			}
 		}
-		
+
 		metadata = result.Metadata
 	}
 
@@ -376,6 +374,6 @@ func (s *MediaService) processFileAsync(ctx context.Context, media *models.Media
 		logrus.Errorf("Failed to update media with processing results: %v", err)
 		return
 	}
-	
+
 	logrus.Infof("File processing completed: %s", media.ID)
 }

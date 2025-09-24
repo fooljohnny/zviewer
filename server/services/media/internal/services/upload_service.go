@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
-	"io"
 	"path/filepath"
 	"sync"
 	"time"
@@ -14,7 +12,6 @@ import (
 	"zviewer-media-service/internal/storage"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // UploadService manages upload progress and chunked uploads
@@ -327,7 +324,7 @@ func (s *UploadService) cleanupExpiredUploads() {
 	for range ticker.C {
 		s.mu.Lock()
 		now := time.Now()
-		
+
 		// Clean up expired progress entries (older than 1 hour)
 		for uploadID, progress := range s.progressMap {
 			if now.Sub(progress.CreatedAt) > time.Hour {
@@ -341,7 +338,7 @@ func (s *UploadService) cleanupExpiredUploads() {
 				delete(s.chunkMap, uploadID)
 			}
 		}
-		
+
 		s.mu.Unlock()
 	}
 }

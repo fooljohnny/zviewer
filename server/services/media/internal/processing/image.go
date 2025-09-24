@@ -7,7 +7,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"github.com/disintegration/imaging"
@@ -68,12 +67,12 @@ func (ip *ImageProcessor) ProcessImage(reader io.Reader, filename string) (*Imag
 	}
 
 	return &ImageProcessingResult{
-		OriginalData:   imageData,
-		OptimizedData:  optimizedData,
-		ThumbnailData:  thumbnailData,
-		Metadata:       metadata,
-		Format:         format,
-		MimeType:       fileType.MIME.Value,
+		OriginalData:  imageData,
+		OptimizedData: optimizedData,
+		ThumbnailData: thumbnailData,
+		Metadata:      metadata,
+		Format:        format,
+		MimeType:      fileType.MIME.Value,
 	}, nil
 }
 

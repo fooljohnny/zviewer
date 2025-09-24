@@ -144,6 +144,7 @@ class _ModernLoginFormState extends State<ModernLoginForm>
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
@@ -196,7 +197,7 @@ class _ModernLoginFormState extends State<ModernLoginForm>
             if (value == null || value.isEmpty) {
               return '请输入邮箱地址';
             }
-            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$').hasMatch(value)) {
               return '请输入有效的邮箱地址';
             }
             return null;
@@ -222,6 +223,8 @@ class _ModernLoginFormState extends State<ModernLoginForm>
         TextFormField(
           controller: _passwordController,
           obscureText: _obscurePassword,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => _handleLogin(),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
@@ -366,7 +369,7 @@ class _ModernLoginFormState extends State<ModernLoginForm>
         ),
         TextButton(
           onPressed: widget.onSwitchToRegister,
-          child: Text(
+          child: const Text(
             '立即注册',
             style: TextStyle(
               color: Colors.white,

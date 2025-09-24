@@ -9,21 +9,21 @@ import (
 
 // PaymentMethod represents a payment method in the system
 type PaymentMethod struct {
-	ID                   string                `json:"id" db:"id"`
-	UserID               string                `json:"userId" db:"user_id"`
-	Type                 PaymentMethodType     `json:"type" db:"type"`
-	Last4                string                `json:"last4" db:"last4"`
-	Brand                *string               `json:"brand,omitempty" db:"brand"`
-	ExpMonth             *int                  `json:"expMonth,omitempty" db:"exp_month"`
-	ExpYear              *int                  `json:"expYear,omitempty" db:"exp_year"`
-	IsDefault            bool                  `json:"isDefault" db:"is_default"`
-	StripePaymentMethodID string               `json:"stripePaymentMethodId" db:"stripe_payment_method_id"`
-	CreatedAt            time.Time             `json:"createdAt" db:"created_at"`
-	UpdatedAt            time.Time             `json:"updatedAt" db:"updated_at"`
+	ID                    string            `json:"id" db:"id"`
+	UserID                string            `json:"userId" db:"user_id"`
+	Type                  PaymentMethodType `json:"type" db:"type"`
+	Last4                 string            `json:"last4" db:"last4"`
+	Brand                 *string           `json:"brand,omitempty" db:"brand"`
+	ExpMonth              *int              `json:"expMonth,omitempty" db:"exp_month"`
+	ExpYear               *int              `json:"expYear,omitempty" db:"exp_year"`
+	IsDefault             bool              `json:"isDefault" db:"is_default"`
+	StripePaymentMethodID string            `json:"stripePaymentMethodId" db:"stripe_payment_method_id"`
+	CreatedAt             time.Time         `json:"createdAt" db:"created_at"`
+	UpdatedAt             time.Time         `json:"updatedAt" db:"updated_at"`
 	// Computed fields
-	UserName             string  `json:"userName,omitempty" db:"user_name"`
-	IsExpired            bool    `json:"isExpired,omitempty" db:"is_expired"`
-	ExpiresSoon          bool    `json:"expiresSoon,omitempty" db:"expires_soon"`
+	UserName     string `json:"userName,omitempty" db:"user_name"`
+	Expired      bool   `json:"expired,omitempty" db:"expired"`
+	ExpiringSoon bool   `json:"expiringSoon,omitempty" db:"expiring_soon"`
 }
 
 // PaymentMethodType represents the type of payment method
@@ -37,9 +37,9 @@ const (
 
 // PaymentMethodCreateRequest represents the request for creating a payment method
 type PaymentMethodCreateRequest struct {
-	Type                 PaymentMethodType `json:"type" binding:"required"`
-	StripePaymentMethodID string           `json:"stripePaymentMethodId" binding:"required"`
-	IsDefault            bool              `json:"isDefault"`
+	Type                  PaymentMethodType `json:"type" binding:"required"`
+	StripePaymentMethodID string            `json:"stripePaymentMethodId" binding:"required"`
+	IsDefault             bool              `json:"isDefault"`
 }
 
 // PaymentMethodUpdateRequest represents the request for updating a payment method

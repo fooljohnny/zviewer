@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"zviewer-media-service/internal/models"
 	"zviewer-media-service/internal/services"
@@ -46,14 +48,12 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		return
 	}
 
-	// Get file
+	// Get files
 	files := form.File["file"]
 	if len(files) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "No file provided"})
 		return
 	}
-
-	file := files[0]
 
 	// Parse request data
 	var req models.MediaUploadRequest
@@ -62,15 +62,61 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		return
 	}
 
-	// Upload media
-	media, err := h.mediaService.UploadMedia(c.Request.Context(), file, req, userID.(string), userName.(string))
-	if err != nil {
-		logrus.Errorf("Failed to upload media: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to upload media"})
-		return
+	// Upload multiple media files
+	var uploadedMedia []models.Media
+	var errors []string
+	
+	for i, file := range files {
+		// Create individual request for each file
+		fileReq := req
+		if len(files) > 1 {
+			// For multiple files, use individual metadata if available
+			fileReq.Title = c.PostForm(fmt.Sprintf("files[%d].title", i))
+			fileReq.Description = c.PostForm(fmt.Sprintf("files[%d].description", i))
+			fileReq.Category = c.PostForm(fmt.Sprintf("files[%d].category", i))
+			fileReq.Tags = strings.Split(c.PostForm(fmt.Sprintf("files[%d].tags", i)), ",")
+		}
+		
+		// If individual metadata is not available, use the main request
+		if fileReq.Title == "" {
+			fileReq.Title = req.Title
+		}
+		if fileReq.Description == "" {
+			fileReq.Description = req.Description
+		}
+		if fileReq.Category == "" {
+			fileReq.Category = req.Category
+		}
+		if len(fileReq.Tags) == 0 {
+			fileReq.Tags = req.Tags
+		}
+
+		// Upload single media
+		media, err := h.mediaService.UploadMedia(c.Request.Context(), file, fileReq, userID.(string), userName.(string))
+		if err != nil {
+			logrus.Errorf("Failed to upload media file %s: %v", file.Filename, err)
+			errors = append(errors, fmt.Sprintf("Failed to upload %s: %v", file.Filename, err))
+			continue
+		}
+		
+		uploadedMedia = append(uploadedMedia, *media)
 	}
 
-	c.JSON(http.StatusCreated, media)
+	// Prepare response
+	response := gin.H{
+		"success": len(uploadedMedia) > 0,
+		"message": fmt.Sprintf("Successfully uploaded %d of %d files", len(uploadedMedia), len(files)),
+		"uploaded_media": uploadedMedia,
+		"successful_uploads": len(uploadedMedia),
+		"failed_uploads": len(errors),
+		"errors": errors,
+	}
+
+	if len(uploadedMedia) > 0 {
+		c.JSON(http.StatusCreated, response)
+	} else {
+		c.JSON(http.StatusInternalServerError, response)
+	}
 }
 
 // GetMedia handles getting a media item by ID
@@ -258,7 +304,7 @@ func (h *MediaHandler) StartChunkedUpload(c *gin.Context) {
 // UploadChunk handles uploading a single chunk
 func (h *MediaHandler) UploadChunk(c *gin.Context) {
 	// Get user info from context
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found"})
 		return

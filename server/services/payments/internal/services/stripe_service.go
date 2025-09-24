@@ -14,7 +14,7 @@ import (
 	"github.com/stripe/stripe-go/v76/paymentintent"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 	"github.com/stripe/stripe-go/v76/refund"
-	"github.com/stripe/stripe-go/v76/sub"
+	"github.com/stripe/stripe-go/v76/subscription"
 	"github.com/stripe/stripe-go/v76/webhook"
 )
 
@@ -33,12 +33,12 @@ func NewStripeService(config *config.Config) *StripeService {
 // CreatePaymentIntent creates a payment intent in Stripe
 func (s *StripeService) CreatePaymentIntent(ctx context.Context, amount int64, currency string, customerID string, paymentMethodID string, description string) (*stripe.PaymentIntent, error) {
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(amount),
-		Currency: stripe.String(currency),
-		PaymentMethod: stripe.String(paymentMethodID),
+		Amount:             stripe.Int64(amount),
+		Currency:           stripe.String(currency),
+		PaymentMethod:      stripe.String(paymentMethodID),
 		ConfirmationMethod: stripe.String(string(stripe.PaymentIntentConfirmationMethodAutomatic)),
-		Confirm:  stripe.Bool(true),
-		Description: stripe.String(description),
+		Confirm:            stripe.Bool(true),
+		Description:        stripe.String(description),
 	}
 
 	if customerID != "" {
@@ -53,8 +53,8 @@ func (s *StripeService) CreatePaymentIntent(ctx context.Context, amount int64, c
 
 	logrus.WithFields(logrus.Fields{
 		"payment_intent_id": pi.ID,
-		"amount": amount,
-		"currency": currency,
+		"amount":            amount,
+		"currency":          currency,
 	}).Info("Payment intent created successfully")
 
 	return pi, nil
@@ -118,14 +118,14 @@ func (s *StripeService) AttachPaymentMethod(ctx context.Context, paymentMethodID
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"payment_method_id": paymentMethodID,
-			"customer_id": customerID,
+			"customer_id":       customerID,
 		}).Error("Failed to attach payment method")
 		return fmt.Errorf("failed to attach payment method: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"payment_method_id": paymentMethodID,
-		"customer_id": customerID,
+		"customer_id":       customerID,
 	}).Info("Payment method attached successfully")
 	return nil
 }
@@ -171,7 +171,7 @@ func (s *StripeService) CreateCustomer(ctx context.Context, email string, name s
 
 	logrus.WithFields(logrus.Fields{
 		"customer_id": c.ID,
-		"user_id": userID,
+		"user_id":     userID,
 	}).Info("Customer created successfully")
 	return c, nil
 }
@@ -202,15 +202,15 @@ func (s *StripeService) CreateRefund(ctx context.Context, paymentIntentID string
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"payment_intent_id": paymentIntentID,
-			"amount": amount,
+			"amount":            amount,
 		}).Error("Failed to create refund")
 		return nil, fmt.Errorf("failed to create refund: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"refund_id": r.ID,
+		"refund_id":         r.ID,
 		"payment_intent_id": paymentIntentID,
-		"amount": amount,
+		"amount":            amount,
 	}).Info("Refund created successfully")
 	return r, nil
 }
@@ -225,32 +225,32 @@ func (s *StripeService) CreateSubscription(ctx context.Context, customerID strin
 			},
 		},
 		DefaultPaymentMethod: stripe.String(paymentMethodID),
-		PaymentBehavior: stripe.String(string(stripe.SubscriptionPaymentBehaviorDefaultIncomplete)),
+		PaymentBehavior:      stripe.String("default_incomplete"),
 		PaymentSettings: &stripe.SubscriptionPaymentSettingsParams{
 			SaveDefaultPaymentMethod: stripe.String("on_subscription"),
 		},
 	}
 
-	sub, err := sub.New(params)
+	sub, err := subscription.New(params)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"customer_id": customerID,
-			"price_id": priceID,
+			"price_id":    priceID,
 		}).Error("Failed to create subscription")
 		return nil, fmt.Errorf("failed to create subscription: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"subscription_id": sub.ID,
-		"customer_id": customerID,
-		"price_id": priceID,
+		"customer_id":     customerID,
+		"price_id":        priceID,
 	}).Info("Subscription created successfully")
 	return sub, nil
 }
 
 // GetSubscription retrieves a subscription from Stripe
 func (s *StripeService) GetSubscription(ctx context.Context, subscriptionID string) (*stripe.Subscription, error) {
-	sub, err := sub.Get(subscriptionID, nil)
+	sub, err := subscription.Get(subscriptionID, nil)
 	if err != nil {
 		logrus.WithError(err).WithField("subscription_id", subscriptionID).Error("Failed to get subscription")
 		return nil, fmt.Errorf("failed to get subscription: %w", err)
@@ -262,22 +262,22 @@ func (s *StripeService) GetSubscription(ctx context.Context, subscriptionID stri
 // CancelSubscription cancels a subscription in Stripe
 func (s *StripeService) CancelSubscription(ctx context.Context, subscriptionID string, cancelAtPeriodEnd bool) (*stripe.Subscription, error) {
 	params := &stripe.SubscriptionParams{}
-	
+
 	if cancelAtPeriodEnd {
 		params.CancelAtPeriodEnd = stripe.Bool(true)
 	} else {
 		params.CancelAtPeriodEnd = stripe.Bool(false)
-		params.CanceledAt = stripe.Int64(time.Now().Unix())
+		params.CancelAt = stripe.Int64(time.Now().Unix())
 	}
 
-	sub, err := sub.Update(subscriptionID, params)
+	sub, err := subscription.Update(subscriptionID, params)
 	if err != nil {
 		logrus.WithError(err).WithField("subscription_id", subscriptionID).Error("Failed to cancel subscription")
 		return nil, fmt.Errorf("failed to cancel subscription: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"subscription_id": subscriptionID,
+		"subscription_id":      subscriptionID,
 		"cancel_at_period_end": cancelAtPeriodEnd,
 	}).Info("Subscription cancelled successfully")
 	return sub, nil
@@ -331,20 +331,23 @@ func (s *StripeService) ConvertStripePaymentIntentToPayment(pi *stripe.PaymentIn
 // ConvertStripePaymentMethodToPaymentMethod converts a Stripe PaymentMethod to our PaymentMethod model
 func (s *StripeService) ConvertStripePaymentMethodToPaymentMethod(pm *stripe.PaymentMethod, userID string) *models.PaymentMethod {
 	paymentMethod := &models.PaymentMethod{
-		ID:                   pm.ID,
-		UserID:               userID,
-		Type:                 models.PaymentMethodType(pm.Type),
+		ID:                    pm.ID,
+		UserID:                userID,
+		Type:                  models.PaymentMethodType(pm.Type),
 		StripePaymentMethodID: pm.ID,
-		CreatedAt:            time.Unix(pm.Created, 0),
-		UpdatedAt:            time.Unix(pm.Created, 0),
+		CreatedAt:             time.Unix(pm.Created, 0),
+		UpdatedAt:             time.Unix(pm.Created, 0),
 	}
 
 	// Set card-specific fields
 	if pm.Card != nil {
 		paymentMethod.Last4 = pm.Card.Last4
-		paymentMethod.Brand = &pm.Card.Brand
-		paymentMethod.ExpMonth = &pm.Card.ExpMonth
-		paymentMethod.ExpYear = &pm.Card.ExpYear
+		brand := string(pm.Card.Brand)
+		paymentMethod.Brand = &brand
+		expMonth := int(pm.Card.ExpMonth)
+		paymentMethod.ExpMonth = &expMonth
+		expYear := int(pm.Card.ExpYear)
+		paymentMethod.ExpYear = &expYear
 	}
 
 	return paymentMethod
@@ -353,11 +356,11 @@ func (s *StripeService) ConvertStripePaymentMethodToPaymentMethod(pm *stripe.Pay
 // ConvertStripeSubscriptionToSubscription converts a Stripe Subscription to our Subscription model
 func (s *StripeService) ConvertStripeSubscriptionToSubscription(sub *stripe.Subscription, userID string) *models.Subscription {
 	subscription := &models.Subscription{
-		ID:                  sub.ID,
-		UserID:              userID,
+		ID:                   sub.ID,
+		UserID:               userID,
 		StripeSubscriptionID: &sub.ID,
-		CreatedAt:           time.Unix(sub.Created, 0),
-		UpdatedAt:           time.Unix(sub.Created, 0),
+		CreatedAt:            time.Unix(sub.Created, 0),
+		UpdatedAt:            time.Unix(sub.Created, 0),
 	}
 
 	// Set status based on Stripe status

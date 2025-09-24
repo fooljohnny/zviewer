@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -121,7 +120,7 @@ func (cs *CleanupService) ValidateFileIntegrity(ctx context.Context) error {
 		}
 
 		if actualSize != media.FileSize {
-			logrus.Warnf("File size mismatch for %s: expected %d, got %d", 
+			logrus.Warnf("File size mismatch for %s: expected %d, got %d",
 				media.FilePath, media.FileSize, actualSize)
 			corruptedCount++
 		}
@@ -145,7 +144,7 @@ func (cs *CleanupService) CleanupUserQuota(ctx context.Context, maxQuotaBytes in
 	for userID, usage := range userUsage {
 		if usage > maxQuotaBytes {
 			logrus.Infof("User %s exceeds quota: %d bytes", userID, usage)
-			
+
 			// Get user's oldest files
 			oldFiles, err := cs.getUserOldestFiles(ctx, userID)
 			if err != nil {

@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -120,7 +119,7 @@ func (vp *VideoProcessor) extractVideoMetadata(videoData []byte) (map[string]int
 
 	// Parse FFmpeg output (simplified - in production, use proper JSON parsing)
 	metadata := make(map[string]interface{})
-	
+
 	// Extract basic info from FFmpeg output
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
@@ -203,28 +202,28 @@ func (vp *VideoProcessor) extractJSONValue(line, key string) string {
 	if start == -1 {
 		return ""
 	}
-	
+
 	start += len(keyPattern)
 	start = strings.Index(line[start:], ":")
 	if start == -1 {
 		return ""
 	}
 	start += len(":")
-	
+
 	// Find the value
 	valueStart := start
 	for valueStart < len(line) && (line[valueStart] == ' ' || line[valueStart] == '\t') {
 		valueStart++
 	}
-	
+
 	valueEnd := valueStart
 	for valueEnd < len(line) && line[valueEnd] != ',' && line[valueEnd] != '}' {
 		valueEnd++
 	}
-	
+
 	value := line[valueStart:valueEnd]
 	value = strings.Trim(value, "\"")
-	
+
 	return value
 }
 
@@ -253,14 +252,14 @@ func (vp *VideoProcessor) generateThumbnail(videoData []byte) ([]byte, error) {
 	defer thumbnailFile.Close()
 
 	// Run FFmpeg to generate thumbnail
-	cmd := exec.Command("ffmpeg", 
+	cmd := exec.Command("ffmpeg",
 		"-i", tempFile.Name(),
 		"-ss", strconv.Itoa(vp.thumbnailTime),
 		"-vframes", "1",
 		"-vf", fmt.Sprintf("scale=%d:%d", vp.thumbnailSize, vp.thumbnailSize*3/4), // 4:3 aspect ratio
 		"-y", // Overwrite output file
 		thumbnailFile.Name())
-	
+
 	err = cmd.Run()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate thumbnail: %w", err)
@@ -310,7 +309,7 @@ func (vp *VideoProcessor) optimizeVideo(videoData []byte) ([]byte, error) {
 		"-movflags", "+faststart", // Enable fast start for web streaming
 		"-y", // Overwrite output file
 		optimizedFile.Name())
-	
+
 	err = cmd.Run()
 	if err != nil {
 		return nil, fmt.Errorf("failed to optimize video: %w", err)

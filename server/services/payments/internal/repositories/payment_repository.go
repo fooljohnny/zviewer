@@ -8,7 +8,6 @@ import (
 
 	"zviewer-payments-service/internal/models"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 

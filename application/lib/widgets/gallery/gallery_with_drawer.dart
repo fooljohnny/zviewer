@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
+import '../../providers/auth_provider.dart';
 import '../common/glassmorphism_card.dart';
 import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 import '../profile/profile_page.dart';
+import '../admin/admin_file_management.dart';
 import 'main_gallery_page.dart';
 
 /// 带抽屉的主画廊页面
@@ -83,9 +86,13 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
           AnimatedBuilder(
             animation: _drawerAnimation,
             builder: (context, child) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final isMobile = screenWidth < 600;
+              final drawerWidth = isMobile ? screenWidth * 0.8 : screenWidth * 0.45;
+              
               return Transform.translate(
                 offset: Offset(
-                  -MediaQuery.of(context).size.width * 0.45 * (1 - _drawerAnimation.value),
+                  -drawerWidth * (1 - _drawerAnimation.value),
                   0,
                 ),
                 child: _buildDrawer(),
@@ -98,12 +105,12 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
                       animation: _drawerAnimation,
                       builder: (context, child) {
                         return Positioned(
-                          top: 100,
-                          left: 80,
+                          top: 16,  // 与搜索按钮同一水平位置
+                          left: 16, // 左上角位置
                           child: Transform.scale(
                             scale: 1.0 - _drawerAnimation.value * 0.3, // 稍微缩小
                             child: Opacity(
-                              opacity: 1.0 - _drawerAnimation.value,
+                              opacity: (1.0 - _drawerAnimation.value) * 0.9,
                               child: _buildFloatingMenuButton(),
                             ),
                           ),
@@ -117,8 +124,11 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   }
 
   Widget _buildDrawer() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return Container(
-      width: MediaQuery.of(context).size.width * 0.45,
+      width: isMobile ? screenWidth * 0.8 : screenWidth * 0.45,
       height: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -250,83 +260,110 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   }
 
   Widget _buildMenuItems() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      children: [
-        _buildMenuItem(
-          icon: Icons.person,
-          title: '个人中心',
-          subtitle: '管理账户信息',
-          onTap: () {
-            _closeDrawer();
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const ProfilePage(),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final isAdmin = authProvider.isAdmin;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+        
+        return ListView(
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16),
+          children: [
+            // 管理员专用菜单项
+            if (isAdmin) ...[
+              _buildMenuItem(
+                icon: Icons.admin_panel_settings,
+                title: '管理资源',
+                subtitle: '查看和管理多媒体文件',
+                isAdmin: true,
+                onTap: () {
+                  _closeDrawer();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AdminFileManagement(),
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-        
-        _buildMenuItem(
-          icon: Icons.photo_library,
-          title: '我的收藏',
-          subtitle: '查看收藏的内容',
-          onTap: () {
-            _closeDrawer();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('收藏功能开发中')),
-            );
-          },
-        ),
-        
-        _buildMenuItem(
-          icon: Icons.history,
-          title: '浏览历史',
-          subtitle: '查看最近浏览的内容',
-          onTap: () {
-            _closeDrawer();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('历史记录功能开发中')),
-            );
-          },
-        ),
-        
-        _buildMenuItem(
-          icon: Icons.settings,
-          title: '设置',
-          subtitle: '应用设置和偏好',
-          onTap: () {
-            _closeDrawer();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('设置功能开发中')),
-            );
-          },
-        ),
-        
-        _buildMenuItem(
-          icon: Icons.help_outline,
-          title: '帮助与支持',
-          subtitle: '获取使用帮助',
-          onTap: () {
-            _closeDrawer();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('帮助功能开发中')),
-            );
-          },
-        ),
-        
-        _buildMenuItem(
-          icon: Icons.info_outline,
-          title: '关于',
-          subtitle: '版本信息和应用详情',
-          onTap: () {
-            _closeDrawer();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('关于页面开发中')),
-            );
-          },
-        ),
-      ],
+              _buildDivider(),
+            ],
+            
+            _buildMenuItem(
+              icon: Icons.person,
+              title: '个人中心',
+              subtitle: '管理账户信息',
+              onTap: () {
+                _closeDrawer();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilePage(),
+                  ),
+                );
+              },
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.photo_library,
+              title: '我的收藏',
+              subtitle: '查看收藏的内容',
+              onTap: () {
+                _closeDrawer();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('收藏功能开发中')),
+                );
+              },
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.history,
+              title: '浏览历史',
+              subtitle: '查看最近浏览的内容',
+              onTap: () {
+                _closeDrawer();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('历史记录功能开发中')),
+                );
+              },
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.settings,
+              title: '设置',
+              subtitle: '应用设置和偏好',
+              onTap: () {
+                _closeDrawer();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('设置功能开发中')),
+                );
+              },
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.help_outline,
+              title: '帮助与支持',
+              subtitle: '获取使用帮助',
+              onTap: () {
+                _closeDrawer();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('帮助功能开发中')),
+                );
+              },
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.info_outline,
+              title: '关于',
+              subtitle: '版本信息和应用详情',
+              onTap: () {
+                _closeDrawer();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('关于页面开发中')),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -335,47 +372,95 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    bool isAdmin = false,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isMobile ? 4 : 6),
       child: GlassmorphismCard(
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
+            decoration: isAdmin ? BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue.withOpacity(0.2),
+                  Colors.purple.withOpacity(0.1),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.blue.withOpacity(0.3),
+                width: 1,
+              ),
+            ) : null,
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isMobile ? 4 : 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: isAdmin 
+                        ? Colors.blue.withOpacity(0.3)
+                        : Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
-                    size: 20,
+                    color: isAdmin ? Colors.blue.shade300 : Colors.white,
+                    size: isMobile ? 16 : 20,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: isMobile ? 8 : 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: isAdmin ? Colors.blue.shade300 : Colors.white,
+                              fontSize: isMobile ? 14 : 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (isAdmin) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 4 : 6, 
+                                vertical: isMobile ? 1 : 2
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'ADMIN',
+                                style: TextStyle(
+                                  color: Colors.blue.shade300,
+                                  fontSize: isMobile ? 8 : 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       Text(
                         subtitle,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 12,
+                          color: isAdmin 
+                              ? Colors.blue.shade200.withOpacity(0.8)
+                              : Colors.white.withOpacity(0.6),
+                          fontSize: isMobile ? 10 : 12,
                         ),
                       ),
                     ],
@@ -383,10 +468,30 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: Colors.white.withOpacity(0.5),
+                  color: isAdmin 
+                      ? Colors.blue.shade300.withOpacity(0.7)
+                      : Colors.white.withOpacity(0.5),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Container(
+        height: 1,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.transparent,
+              Colors.white.withOpacity(0.2),
+              Colors.transparent,
+            ],
           ),
         ),
       ),
@@ -429,39 +534,69 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF007AFF),
-              Color(0xFF5856D6),
-              Color(0xFFFF9500),
-            ],
-          ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
+              spreadRadius: 0,
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.09),
+                    Colors.white.withOpacity(0.06),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1.0,
                 ),
               ),
-              child: const Center(
-                child: ZViewerLogoSmall(),
+              child: Center(
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.25),
+                        Colors.white.withOpacity(0.15),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: ZViewerLogoSmall(),
+                  ),
+                ),
               ),
             ),
           ),

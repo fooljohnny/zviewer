@@ -144,6 +144,8 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  // Minimum size is enforced by WM_GETMINMAXINFO
+
   UpdateTheme(window);
 
   return OnCreate();
@@ -186,6 +188,23 @@ Win32Window::MessageHandler(HWND hwnd,
         PostQuitMessage(0);
       }
       return 0;
+
+    case WM_GETMINMAXINFO: {
+      // Set minimum window size (iPhone 16 size)
+      // Minimum width: 393px, minimum height: 852px
+      // Maximum size is not limited, allowing users to resize larger
+      MINMAXINFO* minMaxInfo = reinterpret_cast<MINMAXINFO*>(lparam);
+      
+      // Get DPI scaling factor
+      UINT dpi = GetDpiForWindow(window_handle_);
+      double scale_factor = dpi / 96.0;
+      
+      // Apply DPI scaling to minimum size
+      minMaxInfo->ptMinTrackSize.x = Scale(393, scale_factor);  // Minimum width (iPhone 16 size)
+      minMaxInfo->ptMinTrackSize.y = Scale(852, scale_factor);  // Minimum height (iPhone 16 size)
+      // No maximum size limits - users can resize larger
+      return 0;
+    }
 
     case WM_DPICHANGED: {
       auto newRectSize = reinterpret_cast<RECT*>(lparam);

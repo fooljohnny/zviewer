@@ -92,11 +92,14 @@ class _ResponsiveWaterfallGridState extends State<ResponsiveWaterfallGrid> {
           return widget.emptyWidget ?? _buildEmptyWidget();
         }
 
-        return CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverPadding(
-              padding: widget.padding,
+        return Scrollbar(
+          thumbVisibility: false,
+          trackVisibility: false,
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPadding(
+                padding: widget.padding,
               sliver: _buildWaterfallGrid(availableWidth),
             ),
             if (widget.isLoading)
@@ -104,6 +107,7 @@ class _ResponsiveWaterfallGridState extends State<ResponsiveWaterfallGrid> {
                 child: widget.loadingWidget ?? _buildLoadingWidget(),
               ),
           ],
+          ),
         );
       },
     );

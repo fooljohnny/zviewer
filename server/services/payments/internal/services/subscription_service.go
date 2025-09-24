@@ -9,7 +9,6 @@ import (
 	"zviewer-payments-service/internal/models"
 	"zviewer-payments-service/internal/repositories"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v76"
 )
@@ -141,8 +140,8 @@ func (s *SubscriptionService) UpdateSubscription(ctx context.Context, subscripti
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"subscription_id":        subscriptionID,
-		"cancel_at_period_end":   req.CancelAtPeriodEnd,
+		"subscription_id":      subscriptionID,
+		"cancel_at_period_end": req.CancelAtPeriodEnd,
 	}).Info("Subscription updated successfully")
 
 	return updatedSubscription, nil
@@ -181,11 +180,11 @@ func (s *SubscriptionService) CancelSubscription(ctx context.Context, subscripti
 // UpdateSubscriptionStatus updates the subscription status
 func (s *SubscriptionService) UpdateSubscriptionStatus(subscriptionID string, status string) error {
 	subscriptionStatus := models.SubscriptionStatus(status)
-	
+
 	// Validate status
 	switch subscriptionStatus {
-	case models.SubscriptionStatusActive, models.SubscriptionStatusCancelled, 
-		 models.SubscriptionStatusExpired, models.SubscriptionStatusPastDue:
+	case models.SubscriptionStatusActive, models.SubscriptionStatusCancelled,
+		models.SubscriptionStatusExpired, models.SubscriptionStatusPastDue:
 		// Valid status
 	default:
 		return fmt.Errorf("invalid subscription status: %s", status)

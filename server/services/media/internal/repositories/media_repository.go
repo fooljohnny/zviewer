@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"zviewer-media-service/internal/models"
-
-	"github.com/google/uuid"
 )
 
 // MediaRepository handles database operations for media items
@@ -30,15 +28,15 @@ func (r *MediaRepository) Create(media *models.MediaItem) error {
 			status, categories, uploaded_at, metadata, file_size, mime_type, thumbnail_path
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
-	
+
 	metadataJSON, _ := json.Marshal(media.Metadata)
-	
+
 	_, err := r.db.Exec(query,
 		media.ID, media.Title, media.Description, media.FilePath, media.Type,
 		media.UserID, media.UserName, media.Status, media.Categories,
 		media.UploadedAt, metadataJSON, media.FileSize, media.MimeType, media.ThumbnailPath,
 	)
-	
+
 	return err
 }
 
@@ -50,29 +48,29 @@ func (r *MediaRepository) GetByID(id string) (*models.MediaItem, error) {
 		       rejection_reason, metadata, file_size, mime_type, thumbnail_path
 		FROM media_items WHERE id = $1
 	`
-	
+
 	var media models.MediaItem
 	var metadataJSON []byte
-	
+
 	err := r.db.QueryRow(query, id).Scan(
 		&media.ID, &media.Title, &media.Description, &media.FilePath, &media.Type,
 		&media.UserID, &media.UserName, &media.Status, &media.Categories,
 		&media.UploadedAt, &media.ApprovedAt, &media.ApprovedBy,
 		&media.RejectionReason, &metadataJSON, &media.FileSize, &media.MimeType, &media.ThumbnailPath,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("media item not found")
 		}
 		return nil, err
 	}
-	
+
 	// Parse metadata JSON
 	if len(metadataJSON) > 0 {
 		json.Unmarshal(metadataJSON, &media.Metadata)
 	}
-	
+
 	return &media, nil
 }
 
@@ -83,14 +81,14 @@ func (r *MediaRepository) Update(media *models.MediaItem) error {
 			title = $2, description = $3, categories = $4, metadata = $5, thumbnail_path = $6
 		WHERE id = $1
 	`
-	
+
 	metadataJSON, _ := json.Marshal(media.Metadata)
-	
+
 	_, err := r.db.Exec(query,
 		media.ID, media.Title, media.Description, media.Categories,
 		metadataJSON, media.ThumbnailPath,
 	)
-	
+
 	return err
 }
 
@@ -105,10 +103,10 @@ func (r *MediaRepository) Delete(id string) error {
 func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int64, error) {
 	// Build WHERE clause
 	whereClause, args := r.buildWhereClause(query)
-	
+
 	// Build ORDER BY clause
 	orderClause := r.buildOrderClause(query)
-	
+
 	// Count total records
 	countQuery := `SELECT COUNT(*) FROM media_items ` + whereClause
 	var total int64
@@ -116,7 +114,7 @@ func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int
 	if err != nil {
 		return nil, 0, err
 	}
-	
+
 	// Build main query
 	offset := (query.Page - 1) * query.Limit
 	mainQuery := `
@@ -124,20 +122,20 @@ func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int
 		       status, categories, uploaded_at, approved_at, approved_by,
 		       rejection_reason, metadata, file_size, mime_type, thumbnail_path
 		FROM media_items ` + whereClause + orderClause + ` LIMIT $` + fmt.Sprintf("%d", len(args)+1) + ` OFFSET $` + fmt.Sprintf("%d", len(args)+2)
-	
+
 	args = append(args, query.Limit, offset)
-	
+
 	rows, err := r.db.Query(mainQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
-	
+
 	var mediaItems []models.MediaItem
 	for rows.Next() {
 		var media models.MediaItem
 		var metadataJSON []byte
-		
+
 		err := rows.Scan(
 			&media.ID, &media.Title, &media.Description, &media.FilePath, &media.Type,
 			&media.UserID, &media.UserName, &media.Status, &media.Categories,
@@ -147,15 +145,15 @@ func (r *MediaRepository) List(query models.MediaQuery) ([]models.MediaItem, int
 		if err != nil {
 			return nil, 0, err
 		}
-		
+
 		// Parse metadata JSON
 		if len(metadataJSON) > 0 {
 			json.Unmarshal(metadataJSON, &media.Metadata)
 		}
-		
+
 		mediaItems = append(mediaItems, media)
 	}
-	
+
 	return mediaItems, total, nil
 }
 
@@ -166,13 +164,13 @@ func (r *MediaRepository) UpdateStatus(id string, status models.MediaStatus, app
 			status = $2, approved_at = $3, approved_by = $4, rejection_reason = $5
 		WHERE id = $1
 	`
-	
+
 	var approvedAt *time.Time
 	if status == models.MediaStatusApproved {
 		now := time.Now()
 		approvedAt = &now
 	}
-	
+
 	_, err := r.db.Exec(query, id, status, approvedAt, approvedBy, rejectionReason)
 	return err
 }
@@ -182,42 +180,42 @@ func (r *MediaRepository) buildWhereClause(query models.MediaQuery) (string, []i
 	var conditions []string
 	var args []interface{}
 	argIndex := 1
-	
+
 	if query.Type != "" {
 		conditions = append(conditions, fmt.Sprintf("type = $%d", argIndex))
 		args = append(args, query.Type)
 		argIndex++
 	}
-	
+
 	if query.Status != "" {
 		conditions = append(conditions, fmt.Sprintf("status = $%d", argIndex))
 		args = append(args, query.Status)
 		argIndex++
 	}
-	
+
 	if query.UserID != "" {
 		conditions = append(conditions, fmt.Sprintf("user_id = $%d", argIndex))
 		args = append(args, query.UserID)
 		argIndex++
 	}
-	
+
 	if query.Search != "" {
 		conditions = append(conditions, fmt.Sprintf("to_tsvector('english', title || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $%d)", argIndex))
 		args = append(args, query.Search)
 		argIndex++
 	}
-	
+
 	if len(query.Categories) > 0 {
 		conditions = append(conditions, fmt.Sprintf("categories && $%d", argIndex))
 		args = append(args, query.Categories)
 		argIndex++
 	}
-	
+
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
-	
+
 	return whereClause, args
 }
 
@@ -227,7 +225,7 @@ func (r *MediaRepository) buildOrderClause(query models.MediaQuery) string {
 	if orderBy == "" {
 		orderBy = "uploaded_at"
 	}
-	
+
 	// Validate sort column
 	validColumns := map[string]bool{
 		"uploaded_at": true,
@@ -235,15 +233,15 @@ func (r *MediaRepository) buildOrderClause(query models.MediaQuery) string {
 		"file_size":   true,
 		"status":      true,
 	}
-	
+
 	if !validColumns[orderBy] {
 		orderBy = "uploaded_at"
 	}
-	
+
 	order := query.SortOrder
 	if order != "asc" && order != "desc" {
 		order = "desc"
 	}
-	
+
 	return fmt.Sprintf(" ORDER BY %s %s", orderBy, strings.ToUpper(order))
 }

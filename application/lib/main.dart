@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/comment_provider.dart';
@@ -7,11 +8,7 @@ import 'providers/content_management_provider.dart';
 import 'providers/danmaku_provider.dart';
 import 'services/content_management_service.dart';
 import 'widgets/multimedia_viewer/multimedia_viewer.dart';
-import 'widgets/navigation/main_navigation.dart';
-import 'widgets/gallery/main_gallery_page.dart';
 import 'widgets/gallery/gallery_with_drawer.dart';
-import 'widgets/gallery/responsive_demo_page.dart';
-import 'widgets/gallery/layout_test_tool.dart';
 import 'widgets/auth/modern_auth_screen.dart';
 import 'widgets/payments/payment_screen.dart';
 import 'widgets/admin/admin_dashboard.dart';
@@ -19,6 +16,20 @@ import 'config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set minimum window size constraints
+  // 最小宽度：400px (确保能完整显示登录表单)
+  // 最小高度：600px (确保能完整显示竖屏内容)
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+  
+  // 设置最小窗口尺寸
+  // 这些设置主要影响桌面端应用
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   
   // Initialize configuration
   await AppConfig.initialize();
@@ -43,13 +54,13 @@ class ZViewerApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthProvider, ContentManagementProvider>(
           create: (context) => ContentManagementProvider(
             service: ContentManagementService(
-              authToken: context.read<AuthProvider>().user?.id,
+              getToken: () => context.read<AuthProvider>().token,
             ),
             authProvider: context.read<AuthProvider>(),
           ),
           update: (context, authProvider, previous) => previous ?? ContentManagementProvider(
             service: ContentManagementService(
-              authToken: authProvider.user?.id,
+              getToken: () => authProvider.token,
             ),
             authProvider: authProvider,
           ),
@@ -63,6 +74,12 @@ class ZViewerApp extends StatelessWidget {
           scrollbarTheme: const ScrollbarThemeData(
             thumbVisibility: WidgetStatePropertyAll(false),
             trackVisibility: WidgetStatePropertyAll(false),
+            thickness: WidgetStatePropertyAll(0.0),
+            radius: Radius.zero,
+            crossAxisMargin: 0.0,
+            mainAxisMargin: 0.0,
+            minThumbLength: 0.0,
+            interactive: false,
           ),
         ),
         home: const AuthWrapper(),
@@ -102,12 +119,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         // Show auth screen if not authenticated
-                if (!authProvider.isAuthenticated) {
-                  return const ModernAuthScreen();
-                }
+        if (!authProvider.isAuthenticated) {
+          return const ModernAuthScreen();
+        }
 
-                // Show main app if authenticated
-                return const GalleryWithDrawer();
+        // Show main app if authenticated
+        return const GalleryWithDrawer();
       },
     );
   }
@@ -170,7 +187,28 @@ class _MultimediaViewerDemoState extends State<MultimediaViewerDemo> {
                           ),
                         );
                       } else if (value == 'logout') {
-                        await authProvider.logout();
+                        // 显示确认对话框
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('确认退出'),
+                            content: const Text('您确定要退出登录吗？'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('取消'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('确定'),
+                              ),
+                            ],
+                          ),
+                        );
+                        
+                        if (shouldLogout == true) {
+                          await authProvider.logout();
+                        }
                       }
                     },
                     itemBuilder: (context) => [

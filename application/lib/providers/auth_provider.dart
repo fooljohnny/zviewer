@@ -18,6 +18,9 @@ class AuthProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get isAdmin => _user?.isAdmin ?? false;
   bool get isModerator => _user?.isModerator ?? false;
+  
+  // Get current token
+  Future<String?> get token async => await _authService.getToken();
 
   // Initialize authentication state
   Future<void> initialize() async {
@@ -96,6 +99,9 @@ class AuthProvider with ChangeNotifier {
       _user = null;
       notifyListeners();
     } catch (e) {
+      // Even if logout API fails, we still clear local data
+      _user = null;
+      notifyListeners();
       _setError('Logout failed: ${e.toString()}');
     } finally {
       _setLoading(false);

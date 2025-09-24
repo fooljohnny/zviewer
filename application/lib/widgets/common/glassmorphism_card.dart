@@ -317,12 +317,12 @@ class GlassmorphismStyles {
     VoidCallback? onTap,
   }) {
     return GlassmorphismCard(
-      child: child,
       width: width,
       height: height,
       padding: padding,
       margin: margin,
       onTap: onTap,
+      child: child,
     );
   }
 
@@ -336,7 +336,6 @@ class GlassmorphismStyles {
     VoidCallback? onTap,
   }) {
     return GlassmorphismCard(
-      child: child,
       width: width,
       height: height,
       padding: padding,
@@ -344,6 +343,7 @@ class GlassmorphismStyles {
       onTap: onTap,
       blurRadius: 30.0,
       opacity: 0.2,
+      child: child,
     );
   }
 
@@ -357,7 +357,6 @@ class GlassmorphismStyles {
     VoidCallback? onTap,
   }) {
     return GlassmorphismCard(
-      child: child,
       width: width,
       height: height,
       padding: padding,
@@ -365,6 +364,7 @@ class GlassmorphismStyles {
       onTap: onTap,
       blurRadius: 10.0,
       opacity: 0.1,
+      child: child,
     );
   }
 }

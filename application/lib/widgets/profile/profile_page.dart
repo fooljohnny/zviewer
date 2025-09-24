@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
-import 'dart:ui';
 import '../../providers/auth_provider.dart';
 import '../common/glassmorphism_card.dart';
 import '../common/zviewer_logo.dart';
@@ -25,11 +25,34 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _obscureConfirmPassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Listen to authentication state changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().addListener(_onAuthStateChanged);
+    });
+  }
+
+  @override
   void dispose() {
+    // Remove the listener to prevent memory leaks
+    context.read<AuthProvider>().removeListener(_onAuthStateChanged);
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    // If user is no longer authenticated, close this page
+    if (!context.read<AuthProvider>().isAuthenticated && mounted) {
+      // 使用SchedulerBinding确保在下一个帧中安全执行导航操作
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
   }
 
   void _changePassword() {
@@ -88,9 +111,33 @@ class _ProfilePageState extends State<ProfilePage> {
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              // 关闭确认对话框
               Navigator.of(context).pop();
-              context.read<AuthProvider>().logout();
+              
+              // 显示退出中的提示
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text('正在退出登录...'),
+                    ],
+                  ),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              
+              // 执行退出登录 - 这会触发 _onAuthStateChanged 自动关闭页面
+              await context.read<AuthProvider>().logout();
             },
             child: const Text('确定'),
           ),

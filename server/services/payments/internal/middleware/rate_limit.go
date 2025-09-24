@@ -94,8 +94,8 @@ func PaymentRateLimitMiddleware(rateLimit rate.Limit, burst int) gin.HandlerFunc
 		// Check if request is allowed
 		if !limiter.Allow() {
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"message": "Payment creation rate limit exceeded",
-				"retry_after": time.Until(limiter.Reserve().DelayFrom(time.Now())).Seconds(),
+				"message":     "Payment creation rate limit exceeded",
+				"retry_after": limiter.Reserve().DelayFrom(time.Now()).Seconds(),
 			})
 			c.Abort()
 			return

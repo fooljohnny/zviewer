@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import '../common/glassmorphism_background.dart';
 import '../common/zviewer_logo.dart';
 import 'modern_login_form.dart';
 import 'modern_register_form.dart';
@@ -206,20 +205,23 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
 
   Widget _buildMainContent() {
     return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo 区域
-            _buildLogoSection(),
-            
-            const SizedBox(height: 50),
-            
-            // 表单区域
-            _buildFormSection(),
-          ],
+      child: Scrollbar(
+        thumbVisibility: false,
+        trackVisibility: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo 区域
+              _buildLogoSection(),
+              
+              const SizedBox(height: 50),
+              
+              // 表单区域
+              _buildFormSection(),
+            ],
+          ),
         ),
       ),
     );
@@ -300,7 +302,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
         child: Container(
           constraints: const BoxConstraints(
             maxWidth: 400,
-            minHeight: 400,
+            minHeight: 300,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
@@ -342,69 +344,4 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
     return _tabController.index == 0;
   }
 
-  Widget _buildModernTabBar() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white.withOpacity(0.7),
-        labelStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        tabs: const [
-          Tab(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.login, size: 20),
-                  SizedBox(width: 8),
-                  Text('登录'),
-                ],
-              ),
-            ),
-          ),
-          Tab(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person_add, size: 20),
-                  SizedBox(width: 8),
-                  Text('注册'),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

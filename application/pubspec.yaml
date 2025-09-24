@@ -19,6 +19,7 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   json_annotation: ^4.8.1
   flutter_svg: ^2.0.9
+  file_picker: ^8.0.0+1
 
 dev_dependencies:
   flutter_test:
@@ -27,6 +28,7 @@ dev_dependencies:
   mockito: ^5.4.4
   build_runner: ^2.4.7
   json_serializable: ^6.7.1
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -34,3 +36,19 @@ flutter:
   assets:
     - assets/
     - assets/logo/
+
+# 应用图标配置
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo/zviewer-logo-512.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/logo/zviewer-logo-512.png"
+    background_color: "#1a1a1a"
+    theme_color: "#007AFF"
+  windows:
+    generate: true
+    image_path: "assets/logo/zviewer-logo-512.png"
+    icon_size: 48

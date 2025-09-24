@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // ErrorResponse represents a standardized error response
@@ -37,16 +36,16 @@ func ErrorHandler() gin.HandlerFunc {
 // HandleError handles errors consistently across handlers
 func HandleError(c *gin.Context, err error, statusCode int, message string) {
 	LogWithContext(c).WithError(err).Error(message)
-	
+
 	response := ErrorResponse{
 		Error: message,
 	}
-	
+
 	// Add details in development mode
 	if gin.Mode() == gin.DebugMode {
 		response.Details = err.Error()
 	}
-	
+
 	c.JSON(statusCode, response)
 }
 

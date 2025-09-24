@@ -74,6 +74,31 @@ class ContentManagementProvider extends ChangeNotifier {
   int get rejectedContent => _content.where((item) => item.isRejected).length;
 
   // Content management methods
+  Future<void> uploadFiles(List<UploadFile> files) async {
+    _setLoading(true);
+    try {
+      final response = await _service.uploadFiles(files);
+      
+      if (response.success) {
+        // Add uploaded content to the current list
+        _content.addAll(response.uploadedContent);
+        _totalContent += response.successfulUploads;
+        _error = null;
+        notifyListeners();
+      } else {
+        _error = response.message;
+      }
+    } catch (e) {
+      _error = e.toString();
+      if (kDebugMode) {
+        print('Error uploading files: $e');
+      }
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> loadContent({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;

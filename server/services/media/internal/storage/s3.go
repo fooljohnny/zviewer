@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -108,7 +109,7 @@ func (s3s *S3Storage) FileExists(ctx context.Context, filePath string) (bool, er
 
 	if err != nil {
 		var notFound *types.NotFound
-		if err.(*types.NotFound) != nil {
+		if errors.As(err, &notFound) {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to check file existence: %w", err)
@@ -135,7 +136,7 @@ func (s3s *S3Storage) GetFileSize(ctx context.Context, filePath string) (int64, 
 func (s3s *S3Storage) GetFileURL(ctx context.Context, filePath string) (string, error) {
 	// Generate a presigned URL for private access
 	presigner := s3.NewPresignClient(s3s.client)
-	
+
 	request, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s3s.bucket),
 		Key:    aws.String(filePath),

@@ -11,21 +11,21 @@ import (
 
 // Payment represents a payment in the system
 type Payment struct {
-	ID              string          `json:"id" db:"id"`
-	UserID          string          `json:"userId" db:"user_id"`
-	Amount          int64           `json:"amount" db:"amount"` // Amount in cents
-	Currency        string          `json:"currency" db:"currency"`
-	Status          PaymentStatus   `json:"status" db:"status"`
-	PaymentMethodID *string         `json:"paymentMethodId,omitempty" db:"payment_method_id"`
-	TransactionID   *string         `json:"transactionId,omitempty" db:"transaction_id"`
-	Description     string          `json:"description" db:"description"`
-	Metadata        json.RawMessage `json:"metadata,omitempty" db:"metadata"`
-	CreatedAt       time.Time       `json:"createdAt" db:"created_at"`
-	UpdatedAt       time.Time       `json:"updatedAt" db:"updated_at"`
+	ID              string        `json:"id" db:"id"`
+	UserID          string        `json:"userId" db:"user_id"`
+	Amount          int64         `json:"amount" db:"amount"` // Amount in cents
+	Currency        string        `json:"currency" db:"currency"`
+	Status          PaymentStatus `json:"status" db:"status"`
+	PaymentMethodID *string       `json:"paymentMethodId,omitempty" db:"payment_method_id"`
+	TransactionID   *string       `json:"transactionId,omitempty" db:"transaction_id"`
+	Description     string        `json:"description" db:"description"`
+	Metadata        JSONData      `json:"metadata,omitempty" db:"metadata"`
+	CreatedAt       time.Time     `json:"createdAt" db:"created_at"`
+	UpdatedAt       time.Time     `json:"updatedAt" db:"updated_at"`
 	// Computed fields
-	UserName        string  `json:"userName,omitempty" db:"user_name"`
-	RefundedAmount  int64   `json:"refundedAmount,omitempty" db:"refunded_amount"`
-	RefundReason    *string `json:"refundReason,omitempty" db:"refund_reason"`
+	UserName       string  `json:"userName,omitempty" db:"user_name"`
+	RefundedAmount int64   `json:"refundedAmount,omitempty" db:"refunded_amount"`
+	RefundReason   *string `json:"refundReason,omitempty" db:"refund_reason"`
 }
 
 // PaymentStatus represents the status of a payment
@@ -41,17 +41,25 @@ const (
 
 // PaymentCreateRequest represents the request for creating a payment
 type PaymentCreateRequest struct {
-	Amount          int64           `json:"amount" binding:"required,min=1"`
-	Currency        string          `json:"currency" binding:"required,len=3"`
-	PaymentMethodID *string         `json:"paymentMethodId,omitempty"`
-	Description     string          `json:"description" binding:"required,min=1,max=500"`
-	Metadata        json.RawMessage `json:"metadata,omitempty"`
+	Amount          int64    `json:"amount" binding:"required,min=1"`
+	Currency        string   `json:"currency" binding:"required,len=3"`
+	PaymentMethodID *string  `json:"paymentMethodId,omitempty"`
+	Description     string   `json:"description" binding:"required,min=1,max=500"`
+	Metadata        JSONData `json:"metadata,omitempty"`
 }
 
 // PaymentRefundRequest represents the request for refunding a payment
 type PaymentRefundRequest struct {
 	Amount int64   `json:"amount" binding:"min=1"`
 	Reason *string `json:"reason,omitempty" binding:"max=500"`
+}
+
+// GetReason returns the reason for the refund, or empty string if nil
+func (r *PaymentRefundRequest) GetReason() string {
+	if r.Reason == nil {
+		return ""
+	}
+	return *r.Reason
 }
 
 // PaymentListResponse represents the response for listing payments
@@ -193,8 +201,11 @@ func (p *Payment) GetRemainingAmount() int64 {
 	return p.Amount - p.RefundedAmount
 }
 
+// JSONData is a custom type for JSON fields
+type JSONData json.RawMessage
+
 // Value implements the driver.Valuer interface for JSON fields
-func (m json.RawMessage) Value() (driver.Value, error) {
+func (m JSONData) Value() (driver.Value, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -202,20 +213,20 @@ func (m json.RawMessage) Value() (driver.Value, error) {
 }
 
 // Scan implements the sql.Scanner interface for JSON fields
-func (m *json.RawMessage) Scan(value interface{}) error {
+func (m *JSONData) Scan(value interface{}) error {
 	if value == nil {
 		*m = nil
 		return nil
 	}
-	
+
 	switch v := value.(type) {
 	case []byte:
-		*m = json.RawMessage(v)
+		*m = JSONData(v)
 		return nil
 	case string:
-		*m = json.RawMessage(v)
+		*m = JSONData(v)
 		return nil
 	default:
-		return fmt.Errorf("cannot scan %T into json.RawMessage", value)
+		return fmt.Errorf("cannot scan %T into JSONData", value)
 	}
 }

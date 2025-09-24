@@ -9,6 +9,7 @@ class ApiConfig {
   static String get commentsUrl => AppConfig.commentsUrl;
   static String get paymentsUrl => AppConfig.paymentsUrl;
   static String get adminUrl => AppConfig.adminUrl;
+  static String get mediaUrl => AppConfig.mediaUrl;
   static String get healthUrl => AppConfig.healthUrl;
   
   // Debug information

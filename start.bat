@@ -1,10 +1,10 @@
 @echo off
-REM ZViewer Startup Script for Windows
-REM This script provides an easy way to start both the Flutter client and Go server
+REM ZViewer Complete Startup Script for Windows
+REM This script starts all microservices and the Flutter client
 
 echo.
 echo ========================================
-echo    ZViewer Startup Script
+echo    ZViewer Complete Startup
 echo ========================================
 echo.
 
@@ -17,7 +17,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Run the Python startup script
-python start.py %*
+REM Run the Python startup script with all services
+echo Starting ZViewer with all microservices...
+python start.py --all-services
 
 pause

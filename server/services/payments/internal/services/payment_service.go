@@ -3,13 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"zviewer-payments-service/internal/config"
 	"zviewer-payments-service/internal/models"
 	"zviewer-payments-service/internal/repositories"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -174,9 +171,9 @@ func (s *PaymentService) ProcessRefund(ctx context.Context, paymentID string, re
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"payment_id":     paymentID,
-		"refund_amount":  refundAmount,
-		"refund_reason":  req.GetReason(),
+		"payment_id":    paymentID,
+		"refund_amount": refundAmount,
+		"refund_reason": req.GetReason(),
 	}).Info("Refund processed successfully")
 
 	return updatedPayment, nil
@@ -185,11 +182,11 @@ func (s *PaymentService) ProcessRefund(ctx context.Context, paymentID string, re
 // UpdatePaymentStatus updates the payment status
 func (s *PaymentService) UpdatePaymentStatus(paymentID string, status string) error {
 	paymentStatus := models.PaymentStatus(status)
-	
+
 	// Validate status
 	switch paymentStatus {
-	case models.PaymentStatusPending, models.PaymentStatusCompleted, models.PaymentStatusFailed, 
-		 models.PaymentStatusRefunded, models.PaymentStatusCancelled:
+	case models.PaymentStatusPending, models.PaymentStatusCompleted, models.PaymentStatusFailed,
+		models.PaymentStatusRefunded, models.PaymentStatusCancelled:
 		// Valid status
 	default:
 		return fmt.Errorf("invalid payment status: %s", status)
@@ -264,14 +261,14 @@ func (s *PaymentService) getOrCreateStripeCustomer(ctx context.Context, userID s
 	// 1. Check if user already has a Stripe customer ID stored in the database
 	// 2. If not, create a new Stripe customer
 	// 3. Store the customer ID in the database for future use
-	
+
 	// For now, we'll create a new customer each time
 	// In production, you should implement proper customer management
 	customer, err := s.stripeService.CreateCustomer(ctx, "user@example.com", "User", userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create Stripe customer: %w", err)
 	}
-	
+
 	return customer.ID, nil
 }
 
@@ -286,9 +283,3 @@ func (s *PaymentService) isValidCurrency(currency string) bool {
 }
 
 // GetReason returns the refund reason or empty string
-func (r *models.PaymentRefundRequest) GetReason() string {
-	if r.Reason == nil {
-		return ""
-	}
-	return *r.Reason
-}

@@ -542,7 +542,7 @@ class _ModernRegisterFormState extends State<ModernRegisterForm>
         ),
         TextButton(
           onPressed: widget.onSwitchToLogin,
-          child: Text(
+          child: const Text(
             '立即登录',
             style: TextStyle(
               color: Colors.white,

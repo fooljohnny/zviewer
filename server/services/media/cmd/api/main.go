@@ -44,18 +44,18 @@ func main() {
 
 	// Initialize services
 	mediaService := services.NewMediaService(mediaRepo, cfg)
-	
+
 	// Create storage factory and get storage instance
 	storageFactory := storage.NewStorageFactory()
 	storageInstance, err := storageFactory.CreateStorage(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create storage: %v", err)
 	}
-	
+
 	// Initialize upload service
 	pathGen := storage.NewPathGenerator()
 	uploadService := services.NewUploadService(storageInstance, pathGen, cfg)
-	
+
 	// Initialize WebSocket handler
 	wsHandler := handlers.NewWebSocketHandler()
 
@@ -85,13 +85,13 @@ func main() {
 			media.DELETE("/:id", mediaHandler.DeleteMedia)
 			media.GET("", mediaHandler.ListMedia)
 		}
-		
+
 		// WebSocket endpoint (no auth required for WebSocket upgrade)
 		api.GET("/ws/upload-progress", mediaHandler.HandleWebSocket)
 	}
 
 	// Health check endpoint
-	router.GET("/health", func(c *gin.Context) {
+	api.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 

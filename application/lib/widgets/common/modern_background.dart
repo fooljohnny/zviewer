@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 /// 现代化背景组件
 /// 提供与登录页面一致的动态渐变背景

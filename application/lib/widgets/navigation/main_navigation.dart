@@ -21,40 +21,40 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
   final List<NavigationItem> _navigationItems = [
-    NavigationItem(
+    const NavigationItem(
       title: '功能展示',
       icon: Icons.star,
-      page: const FeatureShowcase(),
+      page: FeatureShowcase(),
     ),
-    NavigationItem(
+    const NavigationItem(
       title: '主画廊',
       icon: Icons.photo_library,
-      page: const MainGalleryPage(),
+      page: MainGalleryPage(),
     ),
-    NavigationItem(
+    const NavigationItem(
       title: '响应式演示',
       icon: Icons.grid_view,
-      page: const ResponsiveDemoPage(),
+      page: ResponsiveDemoPage(),
     ),
-    NavigationItem(
+    const NavigationItem(
       title: '布局测试',
       icon: Icons.tune,
-      page: const LayoutTestTool(),
+      page: LayoutTestTool(),
     ),
-    NavigationItem(
+    const NavigationItem(
       title: '详情页面',
       icon: Icons.visibility,
-      page: const EnhancedDetailPage(
+      page: EnhancedDetailPage(
         mediaPath: 'https://picsum.photos/800/600?random=1',
         mediaId: 'demo_1',
         title: '演示图片',
         description: '这是一个演示详情页面，展示了弹幕评论系统和毛玻璃效果。',
       ),
     ),
-    NavigationItem(
+    const NavigationItem(
       title: '弹幕演示',
       icon: Icons.chat_bubble_outline,
-      page: const DanmakuDemoPage(),
+      page: DanmakuDemoPage(),
     ),
   ];
 

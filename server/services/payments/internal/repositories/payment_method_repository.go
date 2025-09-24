@@ -76,7 +76,7 @@ func (r *PaymentMethodRepository) GetByID(id string) (*models.PaymentMethod, err
 		&paymentMethod.ID, &paymentMethod.UserID, &paymentMethod.Type, &paymentMethod.Last4,
 		&paymentMethod.Brand, &paymentMethod.ExpMonth, &paymentMethod.ExpYear, &paymentMethod.IsDefault,
 		&paymentMethod.StripePaymentMethodID, &paymentMethod.CreatedAt, &paymentMethod.UpdatedAt,
-		&paymentMethod.UserName, &paymentMethod.IsExpired, &paymentMethod.ExpiresSoon)
+		&paymentMethod.UserName, &paymentMethod.Expired, &paymentMethod.ExpiringSoon)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -172,7 +172,7 @@ func (r *PaymentMethodRepository) GetByUserID(userID string, query *models.Payme
 			&paymentMethod.ID, &paymentMethod.UserID, &paymentMethod.Type, &paymentMethod.Last4,
 			&paymentMethod.Brand, &paymentMethod.ExpMonth, &paymentMethod.ExpYear, &paymentMethod.IsDefault,
 			&paymentMethod.StripePaymentMethodID, &paymentMethod.CreatedAt, &paymentMethod.UpdatedAt,
-			&paymentMethod.UserName, &paymentMethod.IsExpired, &paymentMethod.ExpiresSoon)
+			&paymentMethod.UserName, &paymentMethod.Expired, &paymentMethod.ExpiringSoon)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to scan payment method")
 			return nil, 0, fmt.Errorf("failed to scan payment method: %w", err)
@@ -217,7 +217,7 @@ func (r *PaymentMethodRepository) GetDefaultByUserID(userID string) (*models.Pay
 		&paymentMethod.ID, &paymentMethod.UserID, &paymentMethod.Type, &paymentMethod.Last4,
 		&paymentMethod.Brand, &paymentMethod.ExpMonth, &paymentMethod.ExpYear, &paymentMethod.IsDefault,
 		&paymentMethod.StripePaymentMethodID, &paymentMethod.CreatedAt, &paymentMethod.UpdatedAt,
-		&paymentMethod.UserName, &paymentMethod.IsExpired, &paymentMethod.ExpiresSoon)
+		&paymentMethod.UserName, &paymentMethod.Expired, &paymentMethod.ExpiringSoon)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -322,7 +322,7 @@ func (r *PaymentMethodRepository) GetByStripeID(stripeID string) (*models.Paymen
 		&paymentMethod.ID, &paymentMethod.UserID, &paymentMethod.Type, &paymentMethod.Last4,
 		&paymentMethod.Brand, &paymentMethod.ExpMonth, &paymentMethod.ExpYear, &paymentMethod.IsDefault,
 		&paymentMethod.StripePaymentMethodID, &paymentMethod.CreatedAt, &paymentMethod.UpdatedAt,
-		&paymentMethod.UserName, &paymentMethod.IsExpired, &paymentMethod.ExpiresSoon)
+		&paymentMethod.UserName, &paymentMethod.Expired, &paymentMethod.ExpiringSoon)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -409,7 +409,7 @@ func (r *PaymentMethodRepository) GetExpiringSoon(days int) ([]models.PaymentMet
 			&paymentMethod.ID, &paymentMethod.UserID, &paymentMethod.Type, &paymentMethod.Last4,
 			&paymentMethod.Brand, &paymentMethod.ExpMonth, &paymentMethod.ExpYear, &paymentMethod.IsDefault,
 			&paymentMethod.StripePaymentMethodID, &paymentMethod.CreatedAt, &paymentMethod.UpdatedAt,
-			&paymentMethod.UserName, &paymentMethod.IsExpired, &paymentMethod.ExpiresSoon)
+			&paymentMethod.UserName, &paymentMethod.Expired, &paymentMethod.ExpiringSoon)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to scan expiring payment method")
 			return nil, fmt.Errorf("failed to scan expiring payment method: %w", err)

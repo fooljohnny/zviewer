@@ -2,14 +2,12 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"zviewer-payments-service/internal/middleware"
 	"zviewer-payments-service/internal/models"
 	"zviewer-payments-service/internal/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // PaymentHandler handles payment HTTP requests

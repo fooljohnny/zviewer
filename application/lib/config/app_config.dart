@@ -52,6 +52,7 @@ class AppConfig {
   static String get commentsUrl => '$baseUrl/api/comments';
   static String get paymentsUrl => '$baseUrl/api/payments';
   static String get adminUrl => '$baseUrl/api/admin';
+  static String get mediaUrl => 'http://localhost:8081/api'; // 媒体服务独立端口
   static String get healthUrl => '$baseUrl/health';
   
   // App Configuration

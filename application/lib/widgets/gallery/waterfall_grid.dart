@@ -73,23 +73,27 @@ class _WaterfallGridState extends State<WaterfallGrid> {
       return widget.emptyWidget ?? _buildEmptyWidget();
     }
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        SliverPadding(
-          padding: widget.padding,
-          sliver: SliverWaterfallGrid(
-            items: widget.items,
-            crossAxisCount: widget.crossAxisCount,
-            crossAxisSpacing: widget.crossAxisSpacing,
-            mainAxisSpacing: widget.mainAxisSpacing,
+    return Scrollbar(
+      thumbVisibility: false,
+      trackVisibility: false,
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverPadding(
+            padding: widget.padding,
+            sliver: SliverWaterfallGrid(
+              items: widget.items,
+              crossAxisCount: widget.crossAxisCount,
+              crossAxisSpacing: widget.crossAxisSpacing,
+              mainAxisSpacing: widget.mainAxisSpacing,
+            ),
           ),
-        ),
-        if (widget.isLoading)
-          SliverToBoxAdapter(
-            child: widget.loadingWidget ?? _buildLoadingWidget(),
-          ),
-      ],
+          if (widget.isLoading)
+            SliverToBoxAdapter(
+              child: widget.loadingWidget ?? _buildLoadingWidget(),
+            ),
+        ],
+      ),
     );
   }
 
