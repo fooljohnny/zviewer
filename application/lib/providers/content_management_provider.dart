@@ -106,18 +106,29 @@ class ContentManagementProvider extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      // 暂时返回空列表，显示"没有内容"状态
-      await Future.delayed(const Duration(milliseconds: 500)); // 模拟网络延迟
+      // 实际调用服务加载内容
+      final response = await _service.getContent(
+        page: _currentPage,
+        limit: 50,
+        searchQuery: _searchQuery,
+        status: _selectedStatus,
+        type: _selectedType,
+        userFilter: _userFilter,
+        startDate: _startDate,
+        endDate: _endDate,
+        categories: _selectedCategories.toList(),
+        sortBy: _sortBy,
+        sortOrder: _sortOrder,
+      );
       
       if (refresh) {
-        _content = [];
+        _content = response.content;
       } else {
-        _content.addAll([]);
+        _content.addAll(response.content);
       }
 
-      _totalPages = 1;
-      _totalContent = 0;
-      _currentPage = 1;
+      _totalPages = response.totalPages;
+      _totalContent = response.total;
       _error = null;
     } catch (e) {
       _error = e.toString();

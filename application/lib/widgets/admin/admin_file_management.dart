@@ -2,28 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../providers/content_management_provider.dart';
+import '../../providers/album_provider.dart';
 import '../../services/content_management_service.dart';
+import '../../models/content_item.dart';
+import '../../models/album.dart';
 import '../common/glassmorphism_card.dart';
 import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
+import '../common/image_thumbnail.dart';
+import 'album_management.dart';
 
-/// 管理文件页面
-/// 支持对后台服务的多媒体文件进行查看、更换、增加、编辑信息
-class AdminFileManagement extends StatefulWidget {
-  const AdminFileManagement({super.key});
+/// 资源管理页面
+/// 支持对后台服务的多媒体文件和图集进行查看、更换、增加、编辑信息
+class AdminResourceManagement extends StatefulWidget {
+  const AdminResourceManagement({super.key});
 
   @override
-  State<AdminFileManagement> createState() => _AdminFileManagementState();
+  State<AdminResourceManagement> createState() => _AdminResourceManagementState();
 }
 
-class _AdminFileManagementState extends State<AdminFileManagement> {
+class _AdminResourceManagementState extends State<AdminResourceManagement> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = '全部';
   String _sortBy = '创建时间';
   bool _isAscending = false;
+  int _selectedTabIndex = 0; // 0: 文件管理, 1: 图集管理
+  
+  // 批量选择相关状态
+  bool _isSelectionMode = false;
+  final Set<String> _selectedFileIds = <String>{};
 
-  final List<String> _categories = ['全部', '图片', '视频', '音频', '文档'];
+  final List<String> _categories = ['全部', '图片', '视频', '音频', '文档', '图集'];
   final List<String> _sortOptions = ['创建时间', '文件名', '大小', '类型'];
 
   @override
@@ -40,6 +50,191 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
     super.dispose();
   }
 
+  // 批量选择相关方法
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedFileIds.clear();
+      }
+    });
+  }
+
+  void _toggleFileSelection(String fileId) {
+    setState(() {
+      if (_selectedFileIds.contains(fileId)) {
+        _selectedFileIds.remove(fileId);
+      } else {
+        _selectedFileIds.add(fileId);
+      }
+    });
+  }
+
+  void _selectAllFiles(List<dynamic> files) {
+    setState(() {
+      _selectedFileIds.clear();
+      for (var file in files) {
+        _selectedFileIds.add(file.id);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedFileIds.clear();
+    });
+  }
+
+  bool _isFileSelected(String fileId) {
+    return _selectedFileIds.contains(fileId);
+  }
+
+  // 批量操作方法
+  void _batchDownload() {
+    if (_selectedFileIds.isEmpty) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('批量下载'),
+        content: Text('确定要下载 ${_selectedFileIds.length} 个文件吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _performBatchDownload();
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _batchDelete() {
+    if (_selectedFileIds.isEmpty) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('批量删除'),
+        content: Text('确定要删除 ${_selectedFileIds.length} 个文件吗？此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _performBatchDelete();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _batchMoveToAlbum() {
+    if (_selectedFileIds.isEmpty) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('移动到相册'),
+        content: Text('确定要将 ${_selectedFileIds.length} 个文件移动到相册吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _performBatchMoveToAlbum();
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performBatchDownload() async {
+    try {
+      // TODO: 实现批量下载逻辑
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('开始下载 ${_selectedFileIds.length} 个文件...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('下载失败: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _performBatchDelete() async {
+    try {
+      final contentProvider = context.read<ContentManagementProvider>();
+      
+      // 批量删除文件
+      for (String fileId in _selectedFileIds) {
+        await contentProvider.deleteContent(fileId, '批量删除');
+      }
+      
+      // 清空选择
+      _clearSelection();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('成功删除 ${_selectedFileIds.length} 个文件'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('删除失败: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _performBatchMoveToAlbum() async {
+    try {
+      // TODO: 实现批量移动到相册逻辑
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('开始移动 ${_selectedFileIds.length} 个文件到相册...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('移动失败: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,21 +245,189 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
               // 头部
               _buildHeader(),
               
-              // 搜索和筛选栏
-              _buildSearchAndFilterBar(),
+              // 标签页
+              _buildTabBar(),
               
-              // 文件列表
+              // 搜索和筛选栏
+              if (_selectedTabIndex == 0) _buildSearchAndFilterBar(),
+              
+              // 批量操作工具栏
+              if (_selectedTabIndex == 0 && _isSelectionMode) _buildBatchToolbar(),
+              
+              // 内容区域
               Expanded(
-                child: _buildFileList(),
+                child: _selectedTabIndex == 0 ? _buildFileList() : _buildAlbumManagement(),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: _buildFloatingActionButton(),
+      floatingActionButton: _selectedTabIndex == 0 ? _buildFloatingActionButton() : null,
     );
   }
 
+  Widget _buildBatchToolbar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // 选中数量显示
+          Icon(
+            Icons.check_circle,
+            color: Colors.blue[300],
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '已选择 ${_selectedFileIds.length} 个文件',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          // 全选/取消全选按钮
+          TextButton.icon(
+            onPressed: () {
+              final contentProvider = context.read<ContentManagementProvider>();
+              final allFiles = _filterContent(contentProvider.content);
+              if (_selectedFileIds.length == allFiles.length) {
+                _clearSelection();
+              } else {
+                _selectAllFiles(allFiles);
+              }
+            },
+            icon: Icon(
+              _selectedFileIds.length == _filterContent(context.read<ContentManagementProvider>().content).length
+                  ? Icons.check_box_outline_blank
+                  : Icons.check_box,
+              color: Colors.white,
+              size: 18,
+            ),
+            label: Text(
+              _selectedFileIds.length == _filterContent(context.read<ContentManagementProvider>().content).length
+                  ? '取消全选'
+                  : '全选',
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // 批量操作按钮
+          _buildBatchActionButton(
+            icon: Icons.download,
+            label: '下载',
+            onPressed: _selectedFileIds.isNotEmpty ? _batchDownload : null,
+          ),
+          const SizedBox(width: 8),
+          _buildBatchActionButton(
+            icon: Icons.delete,
+            label: '删除',
+            onPressed: _selectedFileIds.isNotEmpty ? _batchDelete : null,
+          ),
+          const SizedBox(width: 8),
+          _buildBatchActionButton(
+            icon: Icons.folder,
+            label: '移动到相册',
+            onPressed: _selectedFileIds.isNotEmpty ? _batchMoveToAlbum : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBatchActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue[600],
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildTabButton('文件管理', 0, Icons.folder),
+          ),
+          Expanded(
+            child: _buildTabButton('图集管理', 1, Icons.photo_library),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String label, int index, IconData icon) {
+    final isSelected = _selectedTabIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlbumManagement() {
+    return const AlbumManagementView();
+  }
 
   Widget _buildHeader() {
     return Container(
@@ -78,7 +441,7 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '文件管理',
+                  '资源管理',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -86,7 +449,7 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
                   ),
                 ),
                 Text(
-                  '管理多媒体文件',
+                  '管理多媒体文件和图集',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white.withOpacity(0.7),
@@ -95,6 +458,28 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
               ],
             ),
           ),
+          // 批量选择模式切换按钮（仅在文件管理标签页显示）
+          if (_selectedTabIndex == 0) ...[
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isSelectionMode 
+                    ? Colors.blue.withOpacity(0.8)
+                    : Colors.white.withOpacity(0.2),
+              ),
+              child: IconButton(
+                onPressed: _toggleSelectionMode,
+                icon: Icon(
+                  _isSelectionMode ? Icons.check_circle : Icons.select_all,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                tooltip: _isSelectionMode ? '退出选择模式' : '批量选择',
+              ),
+            ),
+          ],
+          const SizedBox(width: 12),
           // 关闭按钮 - 右上角
           Container(
             decoration: BoxDecoration(
@@ -439,8 +824,14 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
           );
         }
 
-        return ListView.builder(
+        return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 20),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: _getCrossAxisCount(context),
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
           itemCount: filteredContent.length,
           itemBuilder: (context, index) {
             final media = filteredContent[index];
@@ -463,8 +854,28 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
 
       // 分类过滤
       if (_selectedCategory != '全部') {
-        // 这里可以根据实际的文件类型进行过滤
-        // 暂时返回所有内容
+        switch (_selectedCategory) {
+          case '图片':
+            if (media.type != ContentType.image) {
+              return false;
+            }
+            break;
+          case '视频':
+            if (media.type != ContentType.video) {
+              return false;
+            }
+            break;
+          case '音频':
+            if (!_isAudioFile(media)) {
+              return false;
+            }
+            break;
+          case '文档':
+            if (!_isDocumentFile(media)) {
+              return false;
+            }
+            break;
+        }
       }
 
       return true;
@@ -481,12 +892,12 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
           comparison = (a.fileSize ?? 0).compareTo(b.fileSize ?? 0);
           break;
         case '类型':
-          comparison = (a.type ?? '').compareTo(b.type ?? '');
+          comparison = _getTypeDisplayName(a.type).compareTo(_getTypeDisplayName(b.type));
           break;
         case '创建时间':
         default:
-          comparison = (a.createdAt ?? DateTime.now())
-              .compareTo(b.createdAt ?? DateTime.now());
+          comparison = (a.uploadedAt ?? DateTime.now())
+              .compareTo(b.uploadedAt ?? DateTime.now());
           break;
       }
       return _isAscending ? comparison : -comparison;
@@ -496,88 +907,211 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
   }
 
   Widget _buildFileItem(dynamic media, int index) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: GlassmorphismCard(
-        child: InkWell(
-          onTap: () => _showFileDetails(media),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // 文件图标
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getFileTypeColor(media.type).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+    final isSelected = _isFileSelected(media.id);
+    
+    return GlassmorphismCard(
+      child: InkWell(
+        onTap: () {
+          if (_isSelectionMode) {
+            _toggleFileSelection(media.id);
+          } else {
+            _showFileDetails(media);
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 缩略图区域
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  // 图片缩略图
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                    child: ImageThumbnail(
+                      id: media.id,
+                      thumbnailPath: media.thumbnailPath,
+                      filePath: media.filePath,
+                      mimeType: media.mimeType,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  child: Icon(
-                    _getFileTypeIcon(media.type),
-                    color: _getFileTypeColor(media.type),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                
-                // 文件信息
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        media.title ?? '未知文件',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  // 文件类型图标覆盖层
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: _getFileTypeColorForMedia(media).withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${media.type ?? '未知类型'} • ${_formatFileSize(media.fileSize)} • ${_formatDate(media.createdAt)}',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                      child: Icon(
+                        _getFileTypeIconForMedia(media),
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  // 选择框（仅在选择模式下显示）
+                  if (_isSelectionMode)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => _toggleFileSelection(media.id),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                                ? Colors.blue 
+                                : Colors.white.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected 
+                                  ? Colors.blue 
+                                  : Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
+                              : null,
                         ),
                       ),
-                    ],
+                    ),
+                  // 右上角操作按钮（非选择模式下显示）
+                  if (!_isSelectionMode)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: PopupMenuButton<String>(
+                        icon: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                        onSelected: (value) => _handleFileAction(value, media),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('编辑信息'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'replace',
+                            child: Text('更换文件'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'download',
+                            child: Text('下载'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('删除'),
+                          ),
+                        ],
+                      ),
                   ),
-                ),
-                
-                // 操作按钮
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  onSelected: (value) => _handleFileAction(value, media),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Text('编辑信息'),
+                  // 视频播放按钮
+                  if (media.type == ContentType.video)
+                    const Center(
+                      child: Icon(
+                        Icons.play_circle_filled,
+                        size: 32,
+                        color: Colors.white,
+                      ),
                     ),
-                    const PopupMenuItem(
-                      value: 'replace',
-                      child: Text('更换文件'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'download',
-                      child: Text('下载'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('删除'),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            // 文件信息区域
+            Container(
+              height: 80, // 固定高度确保有足够空间显示文件名
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 文件名 - 占用更多空间
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      media.title ?? '未知文件',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // 文件类型和大小 - 使用剩余空间
+                  Flexible(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 文件类型
+                        Text(
+                          _getFileTypeDisplayName(media),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        // 文件大小
+                        Text(
+                          _formatFileSize(media.fileSize),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 9,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        // 上传时间
+                        Text(
+                          _formatDate(media.uploadedAt),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 9,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -591,56 +1125,125 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
     );
   }
 
-  Color _getFileTypeColor(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'image':
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-        return Colors.green;
-      case 'video':
-      case 'mp4':
-      case 'avi':
-      case 'mov':
-        return Colors.red;
-      case 'audio':
-      case 'mp3':
-      case 'wav':
+
+  Color _getFileTypeColorForMedia(dynamic media) {
+    // 首先检查ContentType
+    if (media.type == ContentType.image) {
+      return Colors.green;
+    } else if (media.type == ContentType.video) {
+      return Colors.red;
+    }
+    
+    // 然后检查MIME类型
+    if (media.mimeType != null) {
+      final mime = media.mimeType!.toLowerCase();
+      if (mime.startsWith('audio/')) {
         return Colors.orange;
-      case 'document':
-      case 'pdf':
-      case 'doc':
+      } else if (mime.startsWith('application/pdf') || 
+                 mime.startsWith('application/msword') ||
+                 mime.startsWith('application/vnd.openxmlformats-officedocument') ||
+                 mime.startsWith('text/')) {
         return Colors.blue;
+      }
+    }
+    
+    // 最后检查文件扩展名
+    if (media.filePath != null) {
+      final path = media.filePath!.toLowerCase();
+      if (path.endsWith('.mp3') || path.endsWith('.wav') || path.endsWith('.flac') || 
+          path.endsWith('.aac') || path.endsWith('.ogg')) {
+        return Colors.orange;
+      } else if (path.endsWith('.pdf') || path.endsWith('.doc') || path.endsWith('.docx') || 
+                 path.endsWith('.txt') || path.endsWith('.rtf')) {
+        return Colors.blue;
+      }
+    }
+    
+    return Colors.grey;
+  }
+
+
+  IconData _getFileTypeIconForMedia(dynamic media) {
+    // 首先检查ContentType
+    if (media.type == ContentType.image) {
+      return Icons.image;
+    } else if (media.type == ContentType.video) {
+      return Icons.videocam;
+    }
+    
+    // 然后检查MIME类型
+    if (media.mimeType != null) {
+      final mime = media.mimeType!.toLowerCase();
+      if (mime.startsWith('audio/')) {
+        return Icons.audiotrack;
+      } else if (mime.startsWith('application/pdf') || 
+                 mime.startsWith('application/msword') ||
+                 mime.startsWith('application/vnd.openxmlformats-officedocument') ||
+                 mime.startsWith('text/')) {
+        return Icons.description;
+      }
+    }
+    
+    // 最后检查文件扩展名
+    if (media.filePath != null) {
+      final path = media.filePath!.toLowerCase();
+      if (path.endsWith('.mp3') || path.endsWith('.wav') || path.endsWith('.flac') || 
+          path.endsWith('.aac') || path.endsWith('.ogg')) {
+        return Icons.audiotrack;
+      } else if (path.endsWith('.pdf') || path.endsWith('.doc') || path.endsWith('.docx') || 
+                 path.endsWith('.txt') || path.endsWith('.rtf')) {
+        return Icons.description;
+      }
+    }
+    
+    return Icons.insert_drive_file;
+  }
+
+  String _getTypeDisplayName(ContentType? type) {
+    switch (type) {
+      case ContentType.image:
+        return '图片';
+      case ContentType.video:
+        return '视频';
       default:
-        return Colors.grey;
+        return '未知类型';
     }
   }
 
-  IconData _getFileTypeIcon(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'image':
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-        return Icons.image;
-      case 'video':
-      case 'mp4':
-      case 'avi':
-      case 'mov':
-        return Icons.videocam;
-      case 'audio':
-      case 'mp3':
-      case 'wav':
-        return Icons.audiotrack;
-      case 'document':
-      case 'pdf':
-      case 'doc':
-        return Icons.description;
-      default:
-        return Icons.insert_drive_file;
+  String _getFileTypeDisplayName(dynamic media) {
+    // 首先检查ContentType
+    if (media.type == ContentType.image) {
+      return '图片';
+    } else if (media.type == ContentType.video) {
+      return '视频';
     }
+    
+    // 然后检查MIME类型
+    if (media.mimeType != null) {
+      final mime = media.mimeType!.toLowerCase();
+      if (mime.startsWith('audio/')) {
+        return '音频';
+      } else if (mime.startsWith('application/pdf') || 
+                 mime.startsWith('application/msword') ||
+                 mime.startsWith('application/vnd.openxmlformats-officedocument') ||
+                 mime.startsWith('text/')) {
+        return '文档';
+      }
+    }
+    
+    // 最后检查文件扩展名
+    if (media.filePath != null) {
+      final path = media.filePath!.toLowerCase();
+      if (path.endsWith('.mp3') || path.endsWith('.wav') || path.endsWith('.flac') || 
+          path.endsWith('.aac') || path.endsWith('.ogg')) {
+        return '音频';
+      } else if (path.endsWith('.pdf') || path.endsWith('.doc') || path.endsWith('.docx') || 
+                 path.endsWith('.txt') || path.endsWith('.rtf')) {
+        return '文档';
+      }
+    }
+    
+    return '未知类型';
   }
 
   String _formatFileSize(int? size) {
@@ -654,6 +1257,55 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
   String _formatDate(DateTime? date) {
     if (date == null) return '未知时间';
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  int _getCrossAxisCount(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 600) {
+      return 2; // 移动端：2列
+    } else if (screenWidth < 900) {
+      return 3; // 平板端：3列
+    } else if (screenWidth < 1200) {
+      return 4; // 小桌面：4列
+    } else {
+      return 5; // 大桌面：5列
+    }
+  }
+
+
+  bool _isAudioFile(dynamic media) {
+    if (media.mimeType != null) {
+      final mime = media.mimeType!.toLowerCase();
+      return mime.startsWith('audio/');
+    }
+    if (media.filePath != null) {
+      final path = media.filePath!.toLowerCase();
+      return path.endsWith('.mp3') || 
+             path.endsWith('.wav') || 
+             path.endsWith('.flac') || 
+             path.endsWith('.aac') || 
+             path.endsWith('.ogg');
+    }
+    return false;
+  }
+
+  bool _isDocumentFile(dynamic media) {
+    if (media.mimeType != null) {
+      final mime = media.mimeType!.toLowerCase();
+      return mime.startsWith('application/pdf') ||
+             mime.startsWith('application/msword') ||
+             mime.startsWith('application/vnd.openxmlformats-officedocument') ||
+             mime.startsWith('text/');
+    }
+    if (media.filePath != null) {
+      final path = media.filePath!.toLowerCase();
+      return path.endsWith('.pdf') || 
+             path.endsWith('.doc') || 
+             path.endsWith('.docx') || 
+             path.endsWith('.txt') || 
+             path.endsWith('.rtf');
+    }
+    return false;
   }
 
   void _showFilterDialog() {
@@ -713,9 +1365,9 @@ class _AdminFileManagementState extends State<AdminFileManagement> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('类型: ${media.type ?? '未知'}'),
+            Text('类型: ${_getTypeDisplayName(media.type)}'),
             Text('大小: ${_formatFileSize(media.fileSize)}'),
-            Text('创建时间: ${_formatDate(media.createdAt)}'),
+            Text('创建时间: ${_formatDate(media.uploadedAt)}'),
             if (media.description != null)
               Text('描述: ${media.description}'),
           ],

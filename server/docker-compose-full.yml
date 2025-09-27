@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: zviewer
+      POSTGRES_USER: zviewer
+      POSTGRES_PASSWORD: zviewer123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zviewer -d zviewer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 主API服务
+  main-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=development
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=zviewer
+      - DB_PASSWORD=zviewer123
+      - DB_NAME=zviewer
+      - DB_SSLMODE=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - JWT_EXPIRATION=24h
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/app/migrations
+      - media_uploads:/app/uploads  # 挂载媒体文件到主服务
+    networks:
+      - zviewer-network
+
+  # 媒体服务
+  media-service:
+    build: ./services/media
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DATABASE_URL=postgres://zviewer:zviewer123@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/uploads/media
+      - MAX_IMAGE_SIZE=104857600
+      - MAX_VIDEO_SIZE=524288000
+      - MAX_CONCURRENT_UPLOADS=10
+      - UPLOAD_TIMEOUT=30
+    volumes:
+      - media_uploads:/uploads/media  # 持久化存储媒体文件
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zviewer-network
+
+  # 评论服务
+  comments-service:
+    build: ./services/comments
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - DATABASE_URL=postgres://zviewer:zviewer123@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zviewer-network
+
+  # 支付服务
+  payments-service:
+    build: ./services/payments
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - DATABASE_URL=postgres://zviewer:zviewer123@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zviewer-network
+
+  # 管理服务
+  admin-service:
+    build: ./services/admin
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+      - DATABASE_URL=postgres://zviewer:zviewer123@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - zviewer-network
+
+volumes:
+  postgres_data:
+  media_uploads:  # 持久化媒体文件存储
+
+networks:
+  zviewer-network:
+    driver: bridge

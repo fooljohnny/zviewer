@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "media-service",
+    "port": 8081,
+    "address": "media-service",
+    "tags": ["api", "media", "upload"],
+    "check": {
+      "http": "http://media-service:8081/api/health",
+      "interval": "10s",
+      "timeout": "3s"
+    }
+  }
+}

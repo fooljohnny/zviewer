@@ -529,12 +529,12 @@ class _ProfilePageState extends State<ProfilePage> {
               if (authProvider.user?.role == 'admin') {
                 return _buildFeatureItem(
                   icon: Icons.admin_panel_settings,
-                  title: '文件管理',
-                  subtitle: '管理多媒体文件',
+                  title: '资源管理',
+                  subtitle: '管理多媒体文件和图集',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const AdminFileManagement(),
+                        builder: (context) => const AdminResourceManagement(),
                       ),
                     );
                   },

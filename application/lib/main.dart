@@ -5,8 +5,10 @@ import 'providers/auth_provider.dart';
 import 'providers/comment_provider.dart';
 import 'providers/payment_provider.dart';
 import 'providers/content_management_provider.dart';
+import 'providers/album_provider.dart';
 import 'providers/danmaku_provider.dart';
 import 'services/content_management_service.dart';
+import 'services/album_service.dart';
 import 'widgets/multimedia_viewer/multimedia_viewer.dart';
 import 'widgets/gallery/gallery_with_drawer.dart';
 import 'widgets/auth/modern_auth_screen.dart';
@@ -65,6 +67,11 @@ class ZViewerApp extends StatelessWidget {
             authProvider: authProvider,
           ),
         ),
+        ChangeNotifierProvider(create: (context) => AlbumProvider(
+          service: AlbumService(
+            getToken: () => context.read<AuthProvider>().token,
+          ),
+        )),
       ],
       child: MaterialApp(
         title: 'ZViewer',

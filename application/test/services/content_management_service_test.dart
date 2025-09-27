@@ -14,7 +14,7 @@ void main() {
 
     setUp(() {
       mockClient = MockClient();
-      service = ContentManagementService(authToken: 'test-token');
+      service = ContentManagementService(getToken: () async => 'test-token');
       // Note: In a real implementation, you would need to inject the mock client
       // This is a simplified test structure
     });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../common/image_thumbnail.dart';
 
 /// 瀑布式网格布局组件
 /// 类似Pinterest的Masonry布局，支持不同高度的多媒体内容
@@ -211,6 +212,8 @@ class WaterfallItem {
   final double aspectRatio;
   final VoidCallback? onTap;
   final Map<String, dynamic>? metadata;
+  final String? thumbnailPath;
+  final String? mimeType;
 
   const WaterfallItem({
     required this.id,
@@ -220,6 +223,8 @@ class WaterfallItem {
     this.aspectRatio = 1.0,
     this.onTap,
     this.metadata,
+    this.thumbnailPath,
+    this.mimeType,
   });
 
   double get height => 200 * aspectRatio; // 基础高度200px
@@ -274,14 +279,16 @@ class WaterfallItemWidget extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // 这里应该使用实际的图片加载组件
-                      Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.image,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
+                      // 使用ImageThumbnail组件显示图片
+                      ImageThumbnail(
+                        id: item.id,
+                        thumbnailPath: item.thumbnailPath,
+                        filePath: item.imageUrl,
+                        mimeType: item.mimeType,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        borderRadius: BorderRadius.zero,
                       ),
                       // 播放按钮（如果是视频）
                       if (item.metadata?['type'] == 'video')
@@ -292,23 +299,6 @@ class WaterfallItemWidget extends StatelessWidget {
                             color: Colors.white,
                           ),
                         ),
-                      // 右上角操作按钮
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Icon(
-                            Icons.more_vert,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),

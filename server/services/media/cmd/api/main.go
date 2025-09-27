@@ -95,6 +95,14 @@ func main() {
 		api.GET("/ws/upload-progress", mediaHandler.HandleWebSocket)
 	}
 
+	// Public media streaming routes (no auth required for public access)
+	// These routes match the Flutter app's expected URL patterns
+	mediaPublic := router.Group("/api/media")
+	{
+		mediaPublic.GET("/stream/:id", mediaHandler.StreamMedia)
+		mediaPublic.GET("/thumbnail/:id", mediaHandler.GetThumbnail)
+	}
+
 	// Health check endpoint
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})

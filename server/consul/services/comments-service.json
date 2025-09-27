@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "comments-service",
+    "port": 8082,
+    "address": "comments-service",
+    "tags": ["api", "comments", "social"],
+    "check": {
+      "http": "http://comments-service:8082/api/health",
+      "interval": "10s",
+      "timeout": "3s"
+    }
+  }
+}

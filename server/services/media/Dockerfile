@@ -30,18 +30,32 @@ FROM alpine:latest
 RUN apk add --no-cache \
     ffmpeg \
     ca-certificates \
-    tzdata
+    tzdata \
+    wget
 
-WORKDIR /root/
+# Create non-root user
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
-# Create uploads directory
-RUN mkdir -p /uploads/media
+# Create uploads directory and set permissions
+RUN mkdir -p /uploads/media && \
+    chown -R appuser:appgroup /uploads && \
+    chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/api/health || exit 1
 
 # Run the application
 CMD ["./main"]

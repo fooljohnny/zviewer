@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "payments-service",
+    "port": 8083,
+    "address": "payments-service",
+    "tags": ["api", "payments", "billing"],
+    "check": {
+      "http": "http://payments-service:8083/api/health",
+      "interval": "10s",
+      "timeout": "3s"
+    }
+  }
+}

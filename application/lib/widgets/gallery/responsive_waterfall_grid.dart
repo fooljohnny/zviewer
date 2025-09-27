@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../common/image_thumbnail.dart';
 
 /// 响应式瀑布式网格布局
 /// 移动端：单列，卡片占满屏幕宽度
@@ -325,14 +326,16 @@ class ResponsiveWaterfallItem extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 这里应该使用实际的图片加载组件
-          Container(
-            color: Colors.grey[300],
-            child: Icon(
-              Icons.image,
-              size: isMobile ? 64 : 48,
-              color: Colors.grey,
-            ),
+          // 使用ImageThumbnail组件显示图片
+          ImageThumbnail(
+            id: item.id,
+            thumbnailPath: item.thumbnailPath,
+            filePath: item.imageUrl,
+            mimeType: item.mimeType,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            borderRadius: BorderRadius.zero,
           ),
           
           // 播放按钮（如果是视频）
@@ -352,23 +355,7 @@ class ResponsiveWaterfallItem extends StatelessWidget {
               ),
             ),
           
-          // 右上角操作按钮
-          Positioned(
-            top: isMobile ? 12 : 8,
-            right: isMobile ? 12 : 8,
-            child: Container(
-              padding: EdgeInsets.all(isMobile ? 8 : 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(isMobile ? 8 : 4),
-              ),
-              child: Icon(
-                Icons.more_vert,
-                size: isMobile ? 20 : 16,
-                color: Colors.white,
-              ),
-            ),
-          ),
+          // 移除了右上角操作按钮，现在只支持点击卡片进入图集
           
           // 移动端底部渐变遮罩
           if (isMobile)
@@ -439,6 +426,8 @@ class WaterfallItem {
   final double aspectRatio;
   final VoidCallback? onTap;
   final Map<String, dynamic>? metadata;
+  final String? thumbnailPath;
+  final String? mimeType;
 
   const WaterfallItem({
     required this.id,
@@ -448,6 +437,8 @@ class WaterfallItem {
     this.aspectRatio = 1.0,
     this.onTap,
     this.metadata,
+    this.thumbnailPath,
+    this.mimeType,
   });
 
   double get height => 200 * aspectRatio; // 基础高度200px

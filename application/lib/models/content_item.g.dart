@@ -25,6 +25,9 @@ ContentItem _$ContentItemFromJson(Map<String, dynamic> json) => ContentItem(
       approvedBy: json['approvedBy'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>,
+      fileSize: (json['fileSize'] as num?)?.toInt(),
+      mimeType: json['mimeType'] as String?,
+      thumbnailPath: json['thumbnailPath'] as String?,
     );
 
 Map<String, dynamic> _$ContentItemToJson(ContentItem instance) =>
@@ -43,6 +46,9 @@ Map<String, dynamic> _$ContentItemToJson(ContentItem instance) =>
       'approvedBy': instance.approvedBy,
       'rejectionReason': instance.rejectionReason,
       'metadata': instance.metadata,
+      'fileSize': instance.fileSize,
+      'mimeType': instance.mimeType,
+      'thumbnailPath': instance.thumbnailPath,
     };
 
 const _$ContentTypeEnumMap = {

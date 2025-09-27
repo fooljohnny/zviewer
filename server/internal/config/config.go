@@ -13,6 +13,12 @@ type Config struct {
 	Server      ServerConfig
 	Database    DatabaseConfig
 	JWT         JWTConfig
+	Services    ServicesConfig
+}
+
+// ServicesConfig holds microservices configuration
+type ServicesConfig struct {
+	MediaServiceURL string
 }
 
 // ServerConfig holds server configuration
@@ -72,6 +78,9 @@ func Load() (*Config, error) {
 			SecretKey:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 			Expiration:    jwtExpiration,
 			RefreshExpiry: refreshExpiry,
+		},
+		Services: ServicesConfig{
+			MediaServiceURL: getEnv("MEDIA_SERVICE_URL", "http://localhost:8081"),
 		},
 	}
 

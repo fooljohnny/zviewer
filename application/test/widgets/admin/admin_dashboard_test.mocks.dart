@@ -3,16 +3,19 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i6;
-import 'dart:ui' as _i7;
+import 'dart:async' as _i7;
+import 'dart:ui' as _i8;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i10;
-import 'package:zviewer/models/admin_action.dart' as _i9;
+import 'package:mockito/src/dummies.dart' as _i11;
+import 'package:zviewer/models/admin_action.dart' as _i10;
+import 'package:zviewer/models/album.dart' as _i5;
 import 'package:zviewer/models/content_category.dart' as _i4;
 import 'package:zviewer/models/content_item.dart' as _i3;
-import 'package:zviewer/providers/auth_provider.dart' as _i5;
-import 'package:zviewer/providers/content_management_provider.dart' as _i8;
+import 'package:zviewer/providers/album_provider.dart' as _i12;
+import 'package:zviewer/providers/auth_provider.dart' as _i6;
+import 'package:zviewer/providers/content_management_provider.dart' as _i9;
+import 'package:zviewer/services/album_service.dart' as _i13;
 import 'package:zviewer/services/content_management_service.dart' as _i2;
 
 // ignore_for_file: type=lint
@@ -30,9 +33,20 @@ import 'package:zviewer/services/content_management_service.dart' as _i2;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-class _FakeContentListResponse_0 extends _i1.SmartFake
+class _FakeUploadResponse_0 extends _i1.SmartFake
+    implements _i2.UploadResponse {
+  _FakeUploadResponse_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeContentListResponse_1 extends _i1.SmartFake
     implements _i2.ContentListResponse {
-  _FakeContentListResponse_0(
+  _FakeContentListResponse_1(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -41,8 +55,8 @@ class _FakeContentListResponse_0 extends _i1.SmartFake
         );
 }
 
-class _FakeContentItem_1 extends _i1.SmartFake implements _i3.ContentItem {
-  _FakeContentItem_1(
+class _FakeContentItem_2 extends _i1.SmartFake implements _i3.ContentItem {
+  _FakeContentItem_2(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -51,9 +65,9 @@ class _FakeContentItem_1 extends _i1.SmartFake implements _i3.ContentItem {
         );
 }
 
-class _FakeContentActionResponse_2 extends _i1.SmartFake
+class _FakeContentActionResponse_3 extends _i1.SmartFake
     implements _i2.ContentActionResponse {
-  _FakeContentActionResponse_2(
+  _FakeContentActionResponse_3(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -62,9 +76,9 @@ class _FakeContentActionResponse_2 extends _i1.SmartFake
         );
 }
 
-class _FakeBulkActionResponse_3 extends _i1.SmartFake
+class _FakeBulkActionResponse_4 extends _i1.SmartFake
     implements _i2.BulkActionResponse {
-  _FakeBulkActionResponse_3(
+  _FakeBulkActionResponse_4(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -73,9 +87,31 @@ class _FakeBulkActionResponse_3 extends _i1.SmartFake
         );
 }
 
-class _FakeContentCategory_4 extends _i1.SmartFake
+class _FakeContentCategory_5 extends _i1.SmartFake
     implements _i4.ContentCategory {
-  _FakeContentCategory_4(
+  _FakeContentCategory_5(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeAlbumActionResponse_6 extends _i1.SmartFake
+    implements _i5.AlbumActionResponse {
+  _FakeAlbumActionResponse_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeAlbumListResponse_7 extends _i1.SmartFake
+    implements _i5.AlbumListResponse {
+  _FakeAlbumListResponse_7(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -87,7 +123,7 @@ class _FakeContentCategory_4 extends _i1.SmartFake
 /// A class which mocks [AuthProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
+class MockAuthProvider extends _i1.Mock implements _i6.AuthProvider {
   MockAuthProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -123,23 +159,29 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
       ) as bool);
 
   @override
+  _i7.Future<String?> get token => (super.noSuchMethod(
+        Invocation.getter(#token),
+        returnValue: _i7.Future<String?>.value(),
+      ) as _i7.Future<String?>);
+
+  @override
   bool get hasListeners => (super.noSuchMethod(
         Invocation.getter(#hasListeners),
         returnValue: false,
       ) as bool);
 
   @override
-  _i6.Future<void> initialize() => (super.noSuchMethod(
+  _i7.Future<void> initialize() => (super.noSuchMethod(
         Invocation.method(
           #initialize,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<bool> login(
+  _i7.Future<bool> login(
     String? email,
     String? password,
   ) =>
@@ -151,11 +193,11 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
             password,
           ],
         ),
-        returnValue: _i6.Future<bool>.value(false),
-      ) as _i6.Future<bool>);
+        returnValue: _i7.Future<bool>.value(false),
+      ) as _i7.Future<bool>);
 
   @override
-  _i6.Future<bool> register(
+  _i7.Future<bool> register(
     String? email,
     String? password,
     String? confirmPassword,
@@ -169,28 +211,28 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
             confirmPassword,
           ],
         ),
-        returnValue: _i6.Future<bool>.value(false),
-      ) as _i6.Future<bool>);
+        returnValue: _i7.Future<bool>.value(false),
+      ) as _i7.Future<bool>);
 
   @override
-  _i6.Future<void> logout() => (super.noSuchMethod(
+  _i7.Future<void> logout() => (super.noSuchMethod(
         Invocation.method(
           #logout,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> refreshUser() => (super.noSuchMethod(
+  _i7.Future<void> refreshUser() => (super.noSuchMethod(
         Invocation.method(
           #refreshUser,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
   void clearError() => super.noSuchMethod(
@@ -202,7 +244,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
       );
 
   @override
-  void addListener(_i7.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i8.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -211,7 +253,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
       );
 
   @override
-  void removeListener(_i7.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i8.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -242,7 +284,7 @@ class MockAuthProvider extends _i1.Mock implements _i5.AuthProvider {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockContentManagementProvider extends _i1.Mock
-    implements _i8.ContentManagementProvider {
+    implements _i9.ContentManagementProvider {
   MockContentManagementProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -260,16 +302,16 @@ class MockContentManagementProvider extends _i1.Mock
       ) as List<_i4.ContentCategory>);
 
   @override
-  List<_i9.AdminAction> get recentActions => (super.noSuchMethod(
+  List<_i10.AdminAction> get recentActions => (super.noSuchMethod(
         Invocation.getter(#recentActions),
-        returnValue: <_i9.AdminAction>[],
-      ) as List<_i9.AdminAction>);
+        returnValue: <_i10.AdminAction>[],
+      ) as List<_i10.AdminAction>);
 
   @override
-  List<_i9.AdminAction> get contentAdminActions => (super.noSuchMethod(
+  List<_i10.AdminAction> get contentAdminActions => (super.noSuchMethod(
         Invocation.getter(#contentAdminActions),
-        returnValue: <_i9.AdminAction>[],
-      ) as List<_i9.AdminAction>);
+        returnValue: <_i10.AdminAction>[],
+      ) as List<_i10.AdminAction>);
 
   @override
   Set<String> get selectedContentIds => (super.noSuchMethod(
@@ -280,7 +322,7 @@ class MockContentManagementProvider extends _i1.Mock
   @override
   String get searchQuery => (super.noSuchMethod(
         Invocation.getter(#searchQuery),
-        returnValue: _i10.dummyValue<String>(
+        returnValue: _i11.dummyValue<String>(
           this,
           Invocation.getter(#searchQuery),
         ),
@@ -289,7 +331,7 @@ class MockContentManagementProvider extends _i1.Mock
   @override
   String get userFilter => (super.noSuchMethod(
         Invocation.getter(#userFilter),
-        returnValue: _i10.dummyValue<String>(
+        returnValue: _i11.dummyValue<String>(
           this,
           Invocation.getter(#userFilter),
         ),
@@ -304,7 +346,7 @@ class MockContentManagementProvider extends _i1.Mock
   @override
   String get sortBy => (super.noSuchMethod(
         Invocation.getter(#sortBy),
-        returnValue: _i10.dummyValue<String>(
+        returnValue: _i11.dummyValue<String>(
           this,
           Invocation.getter(#sortBy),
         ),
@@ -313,7 +355,7 @@ class MockContentManagementProvider extends _i1.Mock
   @override
   String get sortOrder => (super.noSuchMethod(
         Invocation.getter(#sortOrder),
-        returnValue: _i10.dummyValue<String>(
+        returnValue: _i11.dummyValue<String>(
           this,
           Invocation.getter(#sortOrder),
         ),
@@ -368,60 +410,71 @@ class MockContentManagementProvider extends _i1.Mock
       ) as bool);
 
   @override
-  _i6.Future<void> loadContent({bool? refresh = false}) => (super.noSuchMethod(
+  _i7.Future<void> uploadFiles(List<_i2.UploadFile>? files) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #uploadFiles,
+          [files],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> loadContent({bool? refresh = false}) => (super.noSuchMethod(
         Invocation.method(
           #loadContent,
           [],
           {#refresh: refresh},
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> loadCategories() => (super.noSuchMethod(
+  _i7.Future<void> loadCategories() => (super.noSuchMethod(
         Invocation.method(
           #loadCategories,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> loadRecentActions({int? limit = 50}) => (super.noSuchMethod(
+  _i7.Future<void> loadRecentActions({int? limit = 50}) => (super.noSuchMethod(
         Invocation.method(
           #loadRecentActions,
           [],
           {#limit: limit},
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> loadContentAdminActions(String? contentId) =>
+  _i7.Future<void> loadContentAdminActions(String? contentId) =>
       (super.noSuchMethod(
         Invocation.method(
           #loadContentAdminActions,
           [contentId],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> approveContent(String? contentId) => (super.noSuchMethod(
+  _i7.Future<void> approveContent(String? contentId) => (super.noSuchMethod(
         Invocation.method(
           #approveContent,
           [contentId],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> rejectContent(
+  _i7.Future<void> rejectContent(
     String? contentId,
     String? reason,
   ) =>
@@ -433,12 +486,12 @@ class MockContentManagementProvider extends _i1.Mock
             reason,
           ],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> deleteContent(
+  _i7.Future<void> deleteContent(
     String? contentId,
     String? reason,
   ) =>
@@ -450,12 +503,12 @@ class MockContentManagementProvider extends _i1.Mock
             reason,
           ],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> categorizeContent(
+  _i7.Future<void> categorizeContent(
     String? contentId,
     List<String>? categories,
   ) =>
@@ -467,12 +520,12 @@ class MockContentManagementProvider extends _i1.Mock
             categories,
           ],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> performBulkAction(
+  _i7.Future<void> performBulkAction(
     String? action,
     List<String>? contentIds,
   ) =>
@@ -484,41 +537,41 @@ class MockContentManagementProvider extends _i1.Mock
             contentIds,
           ],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> createCategory(_i4.ContentCategory? category) =>
+  _i7.Future<void> createCategory(_i4.ContentCategory? category) =>
       (super.noSuchMethod(
         Invocation.method(
           #createCategory,
           [category],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> updateCategory(_i4.ContentCategory? category) =>
+  _i7.Future<void> updateCategory(_i4.ContentCategory? category) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateCategory,
           [category],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> deleteCategory(String? categoryId) => (super.noSuchMethod(
+  _i7.Future<void> deleteCategory(String? categoryId) => (super.noSuchMethod(
         Invocation.method(
           #deleteCategory,
           [categoryId],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
   void setSearch(String? query) => super.noSuchMethod(
@@ -659,24 +712,24 @@ class MockContentManagementProvider extends _i1.Mock
       );
 
   @override
-  _i6.Future<void> loadNextPage() => (super.noSuchMethod(
+  _i7.Future<void> loadNextPage() => (super.noSuchMethod(
         Invocation.method(
           #loadNextPage,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i6.Future<void> loadPreviousPage() => (super.noSuchMethod(
+  _i7.Future<void> loadPreviousPage() => (super.noSuchMethod(
         Invocation.method(
           #loadPreviousPage,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
   void clearError() => super.noSuchMethod(
@@ -688,17 +741,17 @@ class MockContentManagementProvider extends _i1.Mock
       );
 
   @override
-  _i6.Future<void> refreshAll() => (super.noSuchMethod(
+  _i7.Future<void> refreshAll() => (super.noSuchMethod(
         Invocation.method(
           #refreshAll,
           [],
         ),
-        returnValue: _i6.Future<void>.value(),
-        returnValueForMissingStub: _i6.Future<void>.value(),
-      ) as _i6.Future<void>);
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  void addListener(_i7.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i8.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -707,7 +760,7 @@ class MockContentManagementProvider extends _i1.Mock
       );
 
   @override
-  void removeListener(_i7.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i8.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],
@@ -744,7 +797,23 @@ class MockContentManagementService extends _i1.Mock
   }
 
   @override
-  _i6.Future<_i2.ContentListResponse> getContentList({
+  _i7.Future<_i2.UploadResponse> uploadFiles(List<_i2.UploadFile>? files) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #uploadFiles,
+          [files],
+        ),
+        returnValue: _i7.Future<_i2.UploadResponse>.value(_FakeUploadResponse_0(
+          this,
+          Invocation.method(
+            #uploadFiles,
+            [files],
+          ),
+        )),
+      ) as _i7.Future<_i2.UploadResponse>);
+
+  @override
+  _i7.Future<_i2.ContentListResponse> getContentList({
     int? page = 1,
     int? limit = 20,
     _i3.ContentStatus? status,
@@ -771,8 +840,8 @@ class MockContentManagementService extends _i1.Mock
             #sortOrder: sortOrder,
           },
         ),
-        returnValue: _i6.Future<_i2.ContentListResponse>.value(
-            _FakeContentListResponse_0(
+        returnValue: _i7.Future<_i2.ContentListResponse>.value(
+            _FakeContentListResponse_1(
           this,
           Invocation.method(
             #getContentList,
@@ -790,43 +859,43 @@ class MockContentManagementService extends _i1.Mock
             },
           ),
         )),
-      ) as _i6.Future<_i2.ContentListResponse>);
+      ) as _i7.Future<_i2.ContentListResponse>);
 
   @override
-  _i6.Future<_i3.ContentItem> getContentItem(String? contentId) =>
+  _i7.Future<_i3.ContentItem> getContentItem(String? contentId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getContentItem,
           [contentId],
         ),
-        returnValue: _i6.Future<_i3.ContentItem>.value(_FakeContentItem_1(
+        returnValue: _i7.Future<_i3.ContentItem>.value(_FakeContentItem_2(
           this,
           Invocation.method(
             #getContentItem,
             [contentId],
           ),
         )),
-      ) as _i6.Future<_i3.ContentItem>);
+      ) as _i7.Future<_i3.ContentItem>);
 
   @override
-  _i6.Future<_i2.ContentActionResponse> approveContent(String? contentId) =>
+  _i7.Future<_i2.ContentActionResponse> approveContent(String? contentId) =>
       (super.noSuchMethod(
         Invocation.method(
           #approveContent,
           [contentId],
         ),
-        returnValue: _i6.Future<_i2.ContentActionResponse>.value(
-            _FakeContentActionResponse_2(
+        returnValue: _i7.Future<_i2.ContentActionResponse>.value(
+            _FakeContentActionResponse_3(
           this,
           Invocation.method(
             #approveContent,
             [contentId],
           ),
         )),
-      ) as _i6.Future<_i2.ContentActionResponse>);
+      ) as _i7.Future<_i2.ContentActionResponse>);
 
   @override
-  _i6.Future<_i2.ContentActionResponse> rejectContent(
+  _i7.Future<_i2.ContentActionResponse> rejectContent(
     String? contentId,
     String? reason,
   ) =>
@@ -838,8 +907,8 @@ class MockContentManagementService extends _i1.Mock
             reason,
           ],
         ),
-        returnValue: _i6.Future<_i2.ContentActionResponse>.value(
-            _FakeContentActionResponse_2(
+        returnValue: _i7.Future<_i2.ContentActionResponse>.value(
+            _FakeContentActionResponse_3(
           this,
           Invocation.method(
             #rejectContent,
@@ -849,10 +918,10 @@ class MockContentManagementService extends _i1.Mock
             ],
           ),
         )),
-      ) as _i6.Future<_i2.ContentActionResponse>);
+      ) as _i7.Future<_i2.ContentActionResponse>);
 
   @override
-  _i6.Future<_i2.ContentActionResponse> deleteContent(
+  _i7.Future<_i2.ContentActionResponse> deleteContent(
     String? contentId,
     String? reason,
   ) =>
@@ -864,8 +933,8 @@ class MockContentManagementService extends _i1.Mock
             reason,
           ],
         ),
-        returnValue: _i6.Future<_i2.ContentActionResponse>.value(
-            _FakeContentActionResponse_2(
+        returnValue: _i7.Future<_i2.ContentActionResponse>.value(
+            _FakeContentActionResponse_3(
           this,
           Invocation.method(
             #deleteContent,
@@ -875,10 +944,10 @@ class MockContentManagementService extends _i1.Mock
             ],
           ),
         )),
-      ) as _i6.Future<_i2.ContentActionResponse>);
+      ) as _i7.Future<_i2.ContentActionResponse>);
 
   @override
-  _i6.Future<_i2.ContentActionResponse> categorizeContent(
+  _i7.Future<_i2.ContentActionResponse> categorizeContent(
     String? contentId,
     List<String>? categories,
   ) =>
@@ -890,8 +959,8 @@ class MockContentManagementService extends _i1.Mock
             categories,
           ],
         ),
-        returnValue: _i6.Future<_i2.ContentActionResponse>.value(
-            _FakeContentActionResponse_2(
+        returnValue: _i7.Future<_i2.ContentActionResponse>.value(
+            _FakeContentActionResponse_3(
           this,
           Invocation.method(
             #categorizeContent,
@@ -901,10 +970,10 @@ class MockContentManagementService extends _i1.Mock
             ],
           ),
         )),
-      ) as _i6.Future<_i2.ContentActionResponse>);
+      ) as _i7.Future<_i2.ContentActionResponse>);
 
   @override
-  _i6.Future<_i2.BulkActionResponse> bulkAction(
+  _i7.Future<_i2.BulkActionResponse> bulkAction(
     String? action,
     List<String>? contentIds, {
     Map<String, dynamic>? metadata,
@@ -919,7 +988,7 @@ class MockContentManagementService extends _i1.Mock
           {#metadata: metadata},
         ),
         returnValue:
-            _i6.Future<_i2.BulkActionResponse>.value(_FakeBulkActionResponse_3(
+            _i7.Future<_i2.BulkActionResponse>.value(_FakeBulkActionResponse_4(
           this,
           Invocation.method(
             #bulkAction,
@@ -930,20 +999,20 @@ class MockContentManagementService extends _i1.Mock
             {#metadata: metadata},
           ),
         )),
-      ) as _i6.Future<_i2.BulkActionResponse>);
+      ) as _i7.Future<_i2.BulkActionResponse>);
 
   @override
-  _i6.Future<List<_i4.ContentCategory>> getCategories() => (super.noSuchMethod(
+  _i7.Future<List<_i4.ContentCategory>> getCategories() => (super.noSuchMethod(
         Invocation.method(
           #getCategories,
           [],
         ),
-        returnValue: _i6.Future<List<_i4.ContentCategory>>.value(
+        returnValue: _i7.Future<List<_i4.ContentCategory>>.value(
             <_i4.ContentCategory>[]),
-      ) as _i6.Future<List<_i4.ContentCategory>>);
+      ) as _i7.Future<List<_i4.ContentCategory>>);
 
   @override
-  _i6.Future<_i4.ContentCategory> createCategory(
+  _i7.Future<_i4.ContentCategory> createCategory(
           _i4.ContentCategory? category) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -951,17 +1020,17 @@ class MockContentManagementService extends _i1.Mock
           [category],
         ),
         returnValue:
-            _i6.Future<_i4.ContentCategory>.value(_FakeContentCategory_4(
+            _i7.Future<_i4.ContentCategory>.value(_FakeContentCategory_5(
           this,
           Invocation.method(
             #createCategory,
             [category],
           ),
         )),
-      ) as _i6.Future<_i4.ContentCategory>);
+      ) as _i7.Future<_i4.ContentCategory>);
 
   @override
-  _i6.Future<_i4.ContentCategory> updateCategory(
+  _i7.Future<_i4.ContentCategory> updateCategory(
           _i4.ContentCategory? category) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -969,37 +1038,38 @@ class MockContentManagementService extends _i1.Mock
           [category],
         ),
         returnValue:
-            _i6.Future<_i4.ContentCategory>.value(_FakeContentCategory_4(
+            _i7.Future<_i4.ContentCategory>.value(_FakeContentCategory_5(
           this,
           Invocation.method(
             #updateCategory,
             [category],
           ),
         )),
-      ) as _i6.Future<_i4.ContentCategory>);
+      ) as _i7.Future<_i4.ContentCategory>);
 
   @override
-  _i6.Future<bool> deleteCategory(String? categoryId) => (super.noSuchMethod(
+  _i7.Future<bool> deleteCategory(String? categoryId) => (super.noSuchMethod(
         Invocation.method(
           #deleteCategory,
           [categoryId],
         ),
-        returnValue: _i6.Future<bool>.value(false),
-      ) as _i6.Future<bool>);
+        returnValue: _i7.Future<bool>.value(false),
+      ) as _i7.Future<bool>);
 
   @override
-  _i6.Future<List<_i9.AdminAction>> getContentAdminActions(String? contentId) =>
+  _i7.Future<List<_i10.AdminAction>> getContentAdminActions(
+          String? contentId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getContentAdminActions,
           [contentId],
         ),
         returnValue:
-            _i6.Future<List<_i9.AdminAction>>.value(<_i9.AdminAction>[]),
-      ) as _i6.Future<List<_i9.AdminAction>>);
+            _i7.Future<List<_i10.AdminAction>>.value(<_i10.AdminAction>[]),
+      ) as _i7.Future<List<_i10.AdminAction>>);
 
   @override
-  _i6.Future<List<_i9.AdminAction>> getRecentAdminActions({
+  _i7.Future<List<_i10.AdminAction>> getRecentAdminActions({
     int? limit = 50,
     String? adminId,
   }) =>
@@ -1013,6 +1083,924 @@ class MockContentManagementService extends _i1.Mock
           },
         ),
         returnValue:
-            _i6.Future<List<_i9.AdminAction>>.value(<_i9.AdminAction>[]),
-      ) as _i6.Future<List<_i9.AdminAction>>);
+            _i7.Future<List<_i10.AdminAction>>.value(<_i10.AdminAction>[]),
+      ) as _i7.Future<List<_i10.AdminAction>>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> createAlbum(
+          _i5.CreateAlbumRequest? request) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createAlbum,
+          [request],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #createAlbum,
+            [request],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> getAlbum(String? albumId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #getAlbum,
+            [albumId],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumListResponse> getAlbums({
+    int? page = 1,
+    int? limit = 20,
+    String? userId,
+    bool? publicOnly = false,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAlbums,
+          [],
+          {
+            #page: page,
+            #limit: limit,
+            #userId: userId,
+            #publicOnly: publicOnly,
+          },
+        ),
+        returnValue:
+            _i7.Future<_i5.AlbumListResponse>.value(_FakeAlbumListResponse_7(
+          this,
+          Invocation.method(
+            #getAlbums,
+            [],
+            {
+              #page: page,
+              #limit: limit,
+              #userId: userId,
+              #publicOnly: publicOnly,
+            },
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumListResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> updateAlbum(
+    String? albumId,
+    _i5.UpdateAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #updateAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> deleteAlbum(String? albumId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #deleteAlbum,
+            [albumId],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> addImagesToAlbum(
+    String? albumId,
+    _i5.AddImageToAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImagesToAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #addImagesToAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> removeImagesFromAlbum(
+    String? albumId,
+    _i5.RemoveImageFromAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImagesFromAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #removeImagesFromAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> setAlbumCover(
+    String? albumId,
+    _i5.SetAlbumCoverRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #setAlbumCover,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #setAlbumCover,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumListResponse> searchAlbums({
+    required String? query,
+    int? page = 1,
+    int? limit = 20,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #searchAlbums,
+          [],
+          {
+            #query: query,
+            #page: page,
+            #limit: limit,
+          },
+        ),
+        returnValue:
+            _i7.Future<_i5.AlbumListResponse>.value(_FakeAlbumListResponse_7(
+          this,
+          Invocation.method(
+            #searchAlbums,
+            [],
+            {
+              #query: query,
+              #page: page,
+              #limit: limit,
+            },
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumListResponse>);
+}
+
+/// A class which mocks [AlbumProvider].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAlbumProvider extends _i1.Mock implements _i12.AlbumProvider {
+  MockAlbumProvider() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  List<_i5.Album> get albums => (super.noSuchMethod(
+        Invocation.getter(#albums),
+        returnValue: <_i5.Album>[],
+      ) as List<_i5.Album>);
+
+  @override
+  List<_i5.Album> get searchResults => (super.noSuchMethod(
+        Invocation.getter(#searchResults),
+        returnValue: <_i5.Album>[],
+      ) as List<_i5.Album>);
+
+  @override
+  String get searchQuery => (super.noSuchMethod(
+        Invocation.getter(#searchQuery),
+        returnValue: _i11.dummyValue<String>(
+          this,
+          Invocation.getter(#searchQuery),
+        ),
+      ) as String);
+
+  @override
+  String get userFilter => (super.noSuchMethod(
+        Invocation.getter(#userFilter),
+        returnValue: _i11.dummyValue<String>(
+          this,
+          Invocation.getter(#userFilter),
+        ),
+      ) as String);
+
+  @override
+  bool get publicOnly => (super.noSuchMethod(
+        Invocation.getter(#publicOnly),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  String get sortBy => (super.noSuchMethod(
+        Invocation.getter(#sortBy),
+        returnValue: _i11.dummyValue<String>(
+          this,
+          Invocation.getter(#sortBy),
+        ),
+      ) as String);
+
+  @override
+  String get sortOrder => (super.noSuchMethod(
+        Invocation.getter(#sortOrder),
+        returnValue: _i11.dummyValue<String>(
+          this,
+          Invocation.getter(#sortOrder),
+        ),
+      ) as String);
+
+  @override
+  int get currentPage => (super.noSuchMethod(
+        Invocation.getter(#currentPage),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  int get totalPages => (super.noSuchMethod(
+        Invocation.getter(#totalPages),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  int get totalAlbums => (super.noSuchMethod(
+        Invocation.getter(#totalAlbums),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get isLoadingMore => (super.noSuchMethod(
+        Invocation.getter(#isLoadingMore),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  int get draftCount => (super.noSuchMethod(
+        Invocation.getter(#draftCount),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  int get publishedCount => (super.noSuchMethod(
+        Invocation.getter(#publishedCount),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  int get archivedCount => (super.noSuchMethod(
+        Invocation.getter(#archivedCount),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  bool get hasListeners => (super.noSuchMethod(
+        Invocation.getter(#hasListeners),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i7.Future<void> createAlbum(_i5.CreateAlbumRequest? request) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createAlbum,
+          [request],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> loadAlbums({bool? refresh = false}) => (super.noSuchMethod(
+        Invocation.method(
+          #loadAlbums,
+          [],
+          {#refresh: refresh},
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> loadPublicAlbums({bool? refresh = false}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #loadPublicAlbums,
+          [],
+          {#refresh: refresh},
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> getAlbum(String? albumId) => (super.noSuchMethod(
+        Invocation.method(
+          #getAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> updateAlbum(
+    String? albumId,
+    _i5.UpdateAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> deleteAlbum(String? albumId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> addImagesToAlbum(
+    String? albumId,
+    List<String>? imageIds,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImagesToAlbum,
+          [
+            albumId,
+            imageIds,
+          ],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> removeImagesFromAlbum(
+    String? albumId,
+    List<String>? imageIds,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImagesFromAlbum,
+          [
+            albumId,
+            imageIds,
+          ],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> setAlbumCover(
+    String? albumId,
+    String? imageId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #setAlbumCover,
+          [
+            albumId,
+            imageId,
+          ],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> searchAlbums(String? query) => (super.noSuchMethod(
+        Invocation.method(
+          #searchAlbums,
+          [query],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> loadMoreAlbums() => (super.noSuchMethod(
+        Invocation.method(
+          #loadMoreAlbums,
+          [],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  void setSearchQuery(String? query) => super.noSuchMethod(
+        Invocation.method(
+          #setSearchQuery,
+          [query],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setStatusFilter(_i5.AlbumStatus? status) => super.noSuchMethod(
+        Invocation.method(
+          #setStatusFilter,
+          [status],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setUserFilter(String? user) => super.noSuchMethod(
+        Invocation.method(
+          #setUserFilter,
+          [user],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setPublicOnly(bool? publicOnly) => super.noSuchMethod(
+        Invocation.method(
+          #setPublicOnly,
+          [publicOnly],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void setSorting(
+    String? sortBy,
+    String? sortOrder,
+  ) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #setSorting,
+          [
+            sortBy,
+            sortOrder,
+          ],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearAllFilters() => super.noSuchMethod(
+        Invocation.method(
+          #clearAllFilters,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void applyFilters() => super.noSuchMethod(
+        Invocation.method(
+          #applyFilters,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i7.Future<void> incrementViewCount(String? albumId) => (super.noSuchMethod(
+        Invocation.method(
+          #incrementViewCount,
+          [albumId],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  void clearCurrentAlbum() => super.noSuchMethod(
+        Invocation.method(
+          #clearCurrentAlbum,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearSearchResults() => super.noSuchMethod(
+        Invocation.method(
+          #clearSearchResults,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearError() => super.noSuchMethod(
+        Invocation.method(
+          #clearError,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i7.Future<void> refreshAll() => (super.noSuchMethod(
+        Invocation.method(
+          #refreshAll,
+          [],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  void addListener(_i8.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void removeListener(_i8.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void notifyListeners() => super.noSuchMethod(
+        Invocation.method(
+          #notifyListeners,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+}
+
+/// A class which mocks [AlbumService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAlbumService extends _i1.Mock implements _i13.AlbumService {
+  MockAlbumService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> createAlbum(
+          _i5.CreateAlbumRequest? request) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createAlbum,
+          [request],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #createAlbum,
+            [request],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> getAlbum(String? albumId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #getAlbum,
+            [albumId],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumListResponse> getAlbums({
+    int? page = 1,
+    int? limit = 20,
+    String? userId,
+    bool? publicOnly = false,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAlbums,
+          [],
+          {
+            #page: page,
+            #limit: limit,
+            #userId: userId,
+            #publicOnly: publicOnly,
+          },
+        ),
+        returnValue:
+            _i7.Future<_i5.AlbumListResponse>.value(_FakeAlbumListResponse_7(
+          this,
+          Invocation.method(
+            #getAlbums,
+            [],
+            {
+              #page: page,
+              #limit: limit,
+              #userId: userId,
+              #publicOnly: publicOnly,
+            },
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumListResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> updateAlbum(
+    String? albumId,
+    _i5.UpdateAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #updateAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> deleteAlbum(String? albumId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #deleteAlbum,
+            [albumId],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> addImagesToAlbum(
+    String? albumId,
+    _i5.AddImageToAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImagesToAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #addImagesToAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> removeImagesFromAlbum(
+    String? albumId,
+    _i5.RemoveImageFromAlbumRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImagesFromAlbum,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #removeImagesFromAlbum,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> setAlbumCover(
+    String? albumId,
+    _i5.SetAlbumCoverRequest? request,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #setAlbumCover,
+          [
+            albumId,
+            request,
+          ],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #setAlbumCover,
+            [
+              albumId,
+              request,
+            ],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumListResponse> searchAlbums({
+    required String? query,
+    int? page = 1,
+    int? limit = 20,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #searchAlbums,
+          [],
+          {
+            #query: query,
+            #page: page,
+            #limit: limit,
+          },
+        ),
+        returnValue:
+            _i7.Future<_i5.AlbumListResponse>.value(_FakeAlbumListResponse_7(
+          this,
+          Invocation.method(
+            #searchAlbums,
+            [],
+            {
+              #query: query,
+              #page: page,
+              #limit: limit,
+            },
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumListResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumListResponse> getPublicAlbums({
+    int? page = 1,
+    int? limit = 20,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPublicAlbums,
+          [],
+          {
+            #page: page,
+            #limit: limit,
+          },
+        ),
+        returnValue:
+            _i7.Future<_i5.AlbumListResponse>.value(_FakeAlbumListResponse_7(
+          this,
+          Invocation.method(
+            #getPublicAlbums,
+            [],
+            {
+              #page: page,
+              #limit: limit,
+            },
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumListResponse>);
+
+  @override
+  _i7.Future<_i5.AlbumActionResponse> getPublicAlbum(String? albumId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPublicAlbum,
+          [albumId],
+        ),
+        returnValue: _i7.Future<_i5.AlbumActionResponse>.value(
+            _FakeAlbumActionResponse_6(
+          this,
+          Invocation.method(
+            #getPublicAlbum,
+            [albumId],
+          ),
+        )),
+      ) as _i7.Future<_i5.AlbumActionResponse>);
+
+  @override
+  _i7.Future<void> incrementViewCount(String? albumId) => (super.noSuchMethod(
+        Invocation.method(
+          #incrementViewCount,
+          [albumId],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 }

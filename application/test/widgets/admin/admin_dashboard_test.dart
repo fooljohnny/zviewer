@@ -6,21 +6,27 @@ import 'package:mockito/annotations.dart';
 import 'package:zviewer/widgets/admin/admin_dashboard.dart';
 import 'package:zviewer/providers/auth_provider.dart';
 import 'package:zviewer/providers/content_management_provider.dart';
+import 'package:zviewer/providers/album_provider.dart';
 import 'package:zviewer/services/content_management_service.dart';
+import 'package:zviewer/services/album_service.dart';
 
 import 'admin_dashboard_test.mocks.dart';
 
-@GenerateMocks([AuthProvider, ContentManagementProvider, ContentManagementService])
+@GenerateMocks([AuthProvider, ContentManagementProvider, ContentManagementService, AlbumProvider, AlbumService])
 void main() {
   group('AdminDashboard', () {
     late MockAuthProvider mockAuthProvider;
     late MockContentManagementProvider mockContentProvider;
     late MockContentManagementService mockService;
+    late MockAlbumProvider mockAlbumProvider;
+    late MockAlbumService mockAlbumService;
 
     setUp(() {
       mockAuthProvider = MockAuthProvider();
       mockContentProvider = MockContentManagementProvider();
       mockService = MockContentManagementService();
+      mockAlbumProvider = MockAlbumProvider();
+      mockAlbumService = MockAlbumService();
     });
 
     Widget createTestWidget() {
@@ -29,6 +35,7 @@ void main() {
           providers: [
             ChangeNotifierProvider<AuthProvider>.value(value: mockAuthProvider),
             ChangeNotifierProvider<ContentManagementProvider>.value(value: mockContentProvider),
+            ChangeNotifierProvider<AlbumProvider>.value(value: mockAlbumProvider),
           ],
           child: const AdminDashboard(),
         ),
@@ -70,6 +77,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();
@@ -93,6 +102,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();
@@ -123,6 +134,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(3);
         when(mockContentProvider.approvedContent).thenReturn(5);
         when(mockContentProvider.rejectedContent).thenReturn(2);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -146,6 +159,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();
@@ -164,6 +179,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();
@@ -184,6 +201,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();
@@ -210,6 +229,8 @@ void main() {
         when(mockContentProvider.pendingContent).thenReturn(0);
         when(mockContentProvider.approvedContent).thenReturn(0);
         when(mockContentProvider.rejectedContent).thenReturn(0);
+        when(mockAlbumProvider.isLoading).thenReturn(false);
+        when(mockAlbumProvider.albums).thenReturn([]);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pump();

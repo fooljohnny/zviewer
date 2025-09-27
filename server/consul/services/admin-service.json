@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "admin-service",
+    "port": 8084,
+    "address": "admin-service",
+    "tags": ["api", "admin", "management"],
+    "check": {
+      "http": "http://admin-service:8084/api/health",
+      "interval": "10s",
+      "timeout": "3s"
+    }
+  }
+}

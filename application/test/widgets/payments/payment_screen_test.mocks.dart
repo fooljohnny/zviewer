@@ -417,6 +417,12 @@ class MockAuthProvider extends _i1.Mock implements _i8.AuthProvider {
       ) as bool);
 
   @override
+  _i6.Future<String?> get token => (super.noSuchMethod(
+        Invocation.getter(#token),
+        returnValue: _i6.Future<String?>.value(),
+      ) as _i6.Future<String?>);
+
+  @override
   bool get hasListeners => (super.noSuchMethod(
         Invocation.getter(#hasListeners),
         returnValue: false,

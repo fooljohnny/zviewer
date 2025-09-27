@@ -1,0 +1,13 @@
+{
+  "service": {
+    "name": "main-server",
+    "port": 8080,
+    "address": "main-server",
+    "tags": ["api", "auth", "users"],
+    "check": {
+      "http": "http://main-server:8080/health",
+      "interval": "10s",
+      "timeout": "3s"
+    }
+  }
+}

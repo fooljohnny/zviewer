@@ -132,6 +132,8 @@ class _MainGalleryPageState extends State<MainGalleryPage>
         subtitle: item.description,
         aspectRatio: _calculateAspectRatio(item),
         onTap: () => _navigateToDetail(item),
+        thumbnailPath: item.thumbnailPath,
+        mimeType: item.mimeType,
         metadata: {
           'type': item.type.toString().split('.').last,
           'createdAt': item.uploadedAt,

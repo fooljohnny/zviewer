@@ -7,7 +7,7 @@ import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 import '../profile/profile_page.dart';
 import '../admin/admin_file_management.dart';
-import 'main_gallery_page.dart';
+import 'album_homepage.dart';
 
 /// 带抽屉的主画廊页面
 /// 包含左侧抽屉和个人中心功能
@@ -23,6 +23,7 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _drawerAnimationController;
   late Animation<double> _drawerAnimation;
+  bool _isHovered = false; // 悬浮按钮悬停状态
 
   @override
   void initState() {
@@ -54,6 +55,18 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
     _drawerAnimationController.reverse();
   }
 
+  void _onHover(bool isHovered) {
+    setState(() {
+      _isHovered = isHovered;
+    });
+  }
+
+  Widget _buildMainContent() {
+    return const AlbumHomepage();
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +75,7 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
         child: Stack(
           children: [
             // 主内容
-            const MainGalleryPage(),
+            _buildMainContent(),
           
           // 抽屉遮罩
           AnimatedBuilder(
@@ -273,14 +286,14 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
             if (isAdmin) ...[
               _buildMenuItem(
                 icon: Icons.admin_panel_settings,
-                title: '管理资源',
-                subtitle: '查看和管理多媒体文件',
+                title: '资源管理',
+                subtitle: '管理多媒体文件和图集',
                 isAdmin: true,
                 onTap: () {
                   _closeDrawer();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const AdminFileManagement(),
+                      builder: (context) => const AdminResourceManagement(),
                     ),
                   );
                 },
@@ -528,73 +541,81 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   }
 
   Widget _buildFloatingMenuButton() {
-    return GestureDetector(
-      onTap: _openDrawer,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 30,
-              offset: const Offset(0, 12),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.09),
-                    Colors.white.withOpacity(0.06),
-                    Colors.white.withOpacity(0.04),
-                  ],
+    return MouseRegion(
+      onEnter: (_) => _onHover(true),
+      onExit: (_) => _onHover(false),
+      child: AnimatedOpacity(
+        opacity: _isHovered ? 1.0 : 0.3, // 默认30%透明度，悬停时100%
+        duration: const Duration(milliseconds: 200),
+        child: GestureDetector(
+          onTap: _openDrawer,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                  spreadRadius: 0,
                 ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 1.0,
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 30,
+                  offset: const Offset(0, 12),
+                  spreadRadius: 0,
                 ),
-              ),
-              child: Center(
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  width: 32,
-                  height: 32,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.25),
-                        Colors.white.withOpacity(0.15),
+                        Colors.white.withOpacity(0.09),
+                        Colors.white.withOpacity(0.06),
+                        Colors.white.withOpacity(0.04),
                       ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.1),
+                      width: 1.0,
+                    ),
                   ),
-                  child: const Center(
-                    child: ZViewerLogoSmall(),
+                  child: Center(
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: ZViewerLogoSmall(),
+                      ),
+                    ),
                   ),
                 ),
               ),

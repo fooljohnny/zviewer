@@ -34,6 +34,9 @@ class ContentItem {
   final String? approvedBy;
   final String? rejectionReason;
   final Map<String, dynamic> metadata;
+  final int? fileSize;
+  final String? mimeType;
+  final String? thumbnailPath;
 
   const ContentItem({
     required this.id,
@@ -50,6 +53,9 @@ class ContentItem {
     this.approvedBy,
     this.rejectionReason,
     required this.metadata,
+    this.fileSize,
+    this.mimeType,
+    this.thumbnailPath,
   });
 
   factory ContentItem.fromJson(Map<String, dynamic> json) =>
@@ -72,6 +78,9 @@ class ContentItem {
     String? approvedBy,
     String? rejectionReason,
     Map<String, dynamic>? metadata,
+    int? fileSize,
+    String? mimeType,
+    String? thumbnailPath,
   }) {
     return ContentItem(
       id: id ?? this.id,
@@ -88,6 +97,9 @@ class ContentItem {
       approvedBy: approvedBy ?? this.approvedBy,
       rejectionReason: rejectionReason ?? this.rejectionReason,
       metadata: metadata ?? this.metadata,
+      fileSize: fileSize ?? this.fileSize,
+      mimeType: mimeType ?? this.mimeType,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
     );
   }
 
@@ -108,7 +120,10 @@ class ContentItem {
         other.approvedAt == approvedAt &&
         other.approvedBy == approvedBy &&
         other.rejectionReason == rejectionReason &&
-        other.metadata == metadata;
+        other.metadata == metadata &&
+        other.fileSize == fileSize &&
+        other.mimeType == mimeType &&
+        other.thumbnailPath == thumbnailPath;
   }
 
   @override
@@ -128,6 +143,9 @@ class ContentItem {
       approvedBy,
       rejectionReason,
       metadata,
+      fileSize,
+      mimeType,
+      thumbnailPath,
     );
   }
 

@@ -3,10 +3,11 @@ import 'package:http/http.dart' as http;
 import '../models/content_item.dart';
 import '../models/content_category.dart';
 import '../models/admin_action.dart';
+import '../models/album.dart';
 import '../config/api_config.dart';
 
 class ContentManagementService {
-  static String get _baseUrl => ApiConfig.adminUrl;
+  static String get _baseUrl => ApiConfig.baseUrl; // 使用基础URL而不是adminUrl
   static String get _mediaUrl => ApiConfig.mediaUrl;
   final Future<String?> Function() _getToken;
 
@@ -125,6 +126,33 @@ class ContentManagementService {
   }
 
   /// Get content list with filtering and search
+  Future<ContentListResponse> getContent({
+    int page = 1,
+    int limit = 20,
+    ContentStatus? status,
+    ContentType? type,
+    String? searchQuery,
+    String? userFilter,
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? categories,
+    String sortBy = 'uploadedAt',
+    String sortOrder = 'desc',
+  }) async {
+    return getContentList(
+      page: page,
+      limit: limit,
+      status: status,
+      type: type,
+      search: searchQuery,
+      userId: userFilter,
+      categories: categories,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+    );
+  }
+
+  /// Get content list with filtering and search (legacy method)
   Future<ContentListResponse> getContentList({
     int page = 1,
     int limit = 20,
@@ -160,7 +188,8 @@ class ContentManagementService {
         queryParams['categories'] = categories.join(',');
       }
 
-      final uri = Uri.parse('$_baseUrl/content').replace(
+      // 使用媒体服务代理端点
+      final uri = Uri.parse('$_baseUrl/media-proxy/media').replace(
         queryParameters: queryParams,
       );
 
@@ -466,6 +495,253 @@ class ContentManagementService {
       throw ContentManagementException('Error fetching recent actions: $e');
     }
   }
+
+  // Album Management Methods
+
+  /// Create album
+  Future<AlbumActionResponse> createAlbum(CreateAlbumRequest request) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums');
+      final response = await http.post(
+        uri,
+        headers: await _headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to create album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error creating album: $e');
+    }
+  }
+
+  /// Get album by ID
+  Future<AlbumActionResponse> getAlbum(String albumId) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId');
+      final response = await http.get(uri, headers: await _headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to get album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error getting album: $e');
+    }
+  }
+
+  /// Get albums list
+  Future<AlbumListResponse> getAlbums({
+    int page = 1,
+    int limit = 20,
+    String? userId,
+    bool publicOnly = false,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      if (userId != null) {
+        queryParams['user_id'] = userId;
+      }
+      if (publicOnly) {
+        queryParams['public'] = 'true';
+      }
+
+      final uri = Uri.parse('$_baseUrl/albums').replace(
+        queryParameters: queryParams,
+      );
+
+      final response = await http.get(uri, headers: await _headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumListResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to get albums: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error getting albums: $e');
+    }
+  }
+
+  /// Update album
+  Future<AlbumActionResponse> updateAlbum(
+    String albumId,
+    UpdateAlbumRequest request,
+  ) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId');
+      final response = await http.put(
+        uri,
+        headers: await _headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to update album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error updating album: $e');
+    }
+  }
+
+  /// Delete album
+  Future<AlbumActionResponse> deleteAlbum(String albumId) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId');
+      final response = await http.delete(uri, headers: await _headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to delete album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error deleting album: $e');
+    }
+  }
+
+  /// Add images to album
+  Future<AlbumActionResponse> addImagesToAlbum(
+    String albumId,
+    AddImageToAlbumRequest request,
+  ) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId/images');
+      final response = await http.post(
+        uri,
+        headers: await _headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to add images to album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error adding images to album: $e');
+    }
+  }
+
+  /// Remove images from album
+  Future<AlbumActionResponse> removeImagesFromAlbum(
+    String albumId,
+    RemoveImageFromAlbumRequest request,
+  ) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId/images');
+      final response = await http.delete(
+        uri,
+        headers: await _headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to remove images from album: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error removing images from album: $e');
+    }
+  }
+
+  /// Set album cover
+  Future<AlbumActionResponse> setAlbumCover(
+    String albumId,
+    SetAlbumCoverRequest request,
+  ) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/albums/$albumId/cover');
+      final response = await http.put(
+        uri,
+        headers: await _headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumActionResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to set album cover: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error setting album cover: $e');
+    }
+  }
+
+  /// Search albums
+  Future<AlbumListResponse> searchAlbums({
+    required String query,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'q': query,
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      final uri = Uri.parse('$_baseUrl/albums/search').replace(
+        queryParameters: queryParams,
+      );
+
+      final response = await http.get(uri, headers: await _headers);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AlbumListResponse.fromJson(data);
+      } else {
+        throw ContentManagementException(
+          'Failed to search albums: ${response.statusCode} - ${response.body}',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      throw ContentManagementException('Error searching albums: $e');
+    }
+  }
 }
 
 // Response Models
@@ -486,14 +762,23 @@ class ContentListResponse {
   });
 
   factory ContentListResponse.fromJson(Map<String, dynamic> json) {
+    // 适配媒体服务的响应格式
+    final contentList = json['content'] ?? json['media'] ?? [];
+    final total = json['total'] as int;
+    final page = json['page'] as int;
+    final limit = json['limit'] as int;
+    
+    // 计算总页数
+    final totalPages = (total / limit).ceil();
+    
     return ContentListResponse(
-      content: (json['content'] as List)
+      content: (contentList as List)
           .map((item) => ContentItem.fromJson(item))
           .toList(),
-      total: json['total'] as int,
-      page: json['page'] as int,
-      limit: json['limit'] as int,
-      totalPages: json['totalPages'] as int,
+      total: total,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
     );
   }
 }

@@ -12,6 +12,8 @@ import (
 	"zviewer-server/internal/config"
 	"zviewer-server/internal/handlers"
 	"zviewer-server/internal/middleware"
+	"zviewer-server/internal/repositories"
+	"zviewer-server/internal/services"
 	"zviewer-server/pkg/database"
 
 	"github.com/gin-gonic/gin"
@@ -48,16 +50,26 @@ func main() {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	
+
 	router := gin.New()
-	
+
 	// Add middleware
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.Recovery(logger))
 	router.Use(middleware.CORS())
 
+	// Initialize repositories
+	albumRepo := repositories.NewAlbumRepository(db, logger)
+	mediaRepo := repositories.NewMediaRepository(db, logger)
+
+	// Initialize services
+	albumService := services.NewAlbumService(albumRepo, logger)
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db, logger, cfg.JWT)
+	albumHandler := handlers.NewAlbumHandler(albumService, logger)
+	mediaHandler := handlers.NewMediaHandler(mediaRepo, logger, "./services/media/uploads/media")
+	proxyHandler := handlers.NewProxyHandler(cfg.Services.MediaServiceURL, logger)
 
 	// Setup routes
 	api := router.Group("/api")
@@ -69,6 +81,51 @@ func main() {
 			auth.POST("/logout", middleware.AuthRequired(cfg.JWT), authHandler.Logout)
 			auth.GET("/me", middleware.AuthRequired(cfg.JWT), authHandler.GetMe)
 		}
+
+		// Admin routes
+		admin := api.Group("/admin")
+		admin.Use(middleware.AuthRequired(cfg.JWT))
+		{
+			albums := admin.Group("/albums")
+			{
+				albums.POST("", albumHandler.CreateAlbum)
+				albums.GET("", albumHandler.GetAlbums)
+				albums.GET("/search", albumHandler.SearchAlbums)
+				albums.GET("/:id", albumHandler.GetAlbum)
+				albums.PUT("/:id", albumHandler.UpdateAlbum)
+				albums.DELETE("/:id", albumHandler.DeleteAlbum)
+				albums.POST("/:id/images", albumHandler.AddImagesToAlbum)
+				albums.DELETE("/:id/images", albumHandler.RemoveImagesFromAlbum)
+				albums.PUT("/:id/cover", albumHandler.SetAlbumCover)
+			}
+		}
+
+		// Public routes
+		public := api.Group("/public")
+		{
+			albums := public.Group("/albums")
+			{
+				albums.GET("", albumHandler.GetAlbums) // Public albums only
+				albums.GET("/:id", albumHandler.GetAlbum)
+			}
+		}
+
+	}
+
+	// Public media routes (no auth required for streaming)
+	media := router.Group("/api/media")
+	{
+		// Direct media streaming (no auth required for public access)
+		media.GET("/stream/:id", mediaHandler.StreamMedia)
+		media.GET("/thumbnail/:id", mediaHandler.GetThumbnail)
+	}
+
+	// Media service proxy routes (with auth) - use different path to avoid conflict
+	mediaProxy := router.Group("/api/media-proxy")
+	mediaProxy.Use(middleware.AuthRequired(cfg.JWT))
+	{
+		// Other media requests can be proxied to media service if needed
+		mediaProxy.Any("/*path", proxyHandler.ProxyToMediaService)
 	}
 
 	// Health check endpoint

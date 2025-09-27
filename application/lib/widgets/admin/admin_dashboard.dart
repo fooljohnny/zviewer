@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/content_management_provider.dart';
+import '../../providers/album_provider.dart';
 import 'content_list.dart';
 import 'category_management.dart';
+import 'album_management.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -31,8 +33,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _loadInitialData() async {
     final contentProvider = context.read<ContentManagementProvider>();
+    final albumProvider = context.read<AlbumProvider>();
     await contentProvider.loadContent();
     await contentProvider.loadCategories();
+    await albumProvider.loadAlbums(refresh: true);
   }
 
   @override
@@ -105,6 +109,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     label: Text('Content'),
                   ),
                   NavigationRailDestination(
+                    icon: Icon(Icons.photo_album),
+                    selectedIcon: Icon(Icons.photo_album),
+                    label: Text('Albums'),
+                  ),
+                  NavigationRailDestination(
                     icon: Icon(Icons.category),
                     selectedIcon: Icon(Icons.category),
                     label: Text('Categories'),
@@ -124,6 +133,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   children: [
                     _DashboardOverview(provider: contentProvider),
                     const ContentManagementView(),
+                    const AlbumManagementView(),
                     const CategoryManagementView(),
                   ],
                 ),
