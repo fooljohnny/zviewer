@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/album_provider.dart';
 import '../../providers/content_management_provider.dart';
 import '../../models/album.dart';
+import '../../models/content_item.dart';
 import '../common/image_thumbnail.dart';
 import 'album_image_management.dart';
 
@@ -32,7 +33,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
     if (widget.album != null) {
       _titleController.text = widget.album!.title;
       _descriptionController.text = widget.album!.description;
-      _tagsController.text = widget.album!.tags.join(', ');
+      _tagsController.text = widget.album!.tags?.join(', ') ?? '';
       _selectedStatus = widget.album!.status;
       _isPublic = widget.album!.isPublic;
     } else {
@@ -112,7 +113,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
               const SizedBox(height: 16),
               // Status dropdown
               DropdownButtonFormField<AlbumStatus>(
-                value: _selectedStatus,
+                initialValue: _selectedStatus,
                 decoration: const InputDecoration(
                   labelText: '状态',
                   border: OutlineInputBorder(),
@@ -328,7 +329,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
   }
 
   void _loadAvailableImages() {
-    context.read<ContentManagementProvider>().loadContent();
+    context.read<ContentManagementProvider>().loadContent(refresh: true);
   }
 
   Widget _buildImageSelection() {
@@ -338,18 +339,47 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        // 调试信息
+        print('AlbumForm - Total content items: ${provider.content.length}');
+        print('AlbumForm - Provider error: ${provider.error}');
+        
+        // 显示所有文件的详细信息
+        print('AlbumForm - All files:');
+        for (var item in provider.content) {
+          print('  - File: ${item.title}, mimeType: ${item.mimeType}, id: ${item.id}, type: ${item.type}');
+        }
+        
         final images = provider.content.where((item) => 
-          item.mimeType?.startsWith('image/') == true
+          item.mimeType?.startsWith('image/') == true || 
+          item.type == ContentType.image
         ).toList();
 
+        print('AlbumForm - Filtered images: ${images.length}');
+        for (var image in images.take(3)) {
+          print('  - Image: ${image.title}, mimeType: ${image.mimeType}, id: ${image.id}');
+        }
+
         if (images.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey),
-                SizedBox(height: 8),
-                Text('暂无可用图片'),
+                const Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey),
+                const SizedBox(height: 8),
+                Text('暂无可用图片 (总共 ${provider.content.length} 个文件)'),
+                if (provider.error != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      '错误: ${provider.error}',
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: _loadAvailableImages,
+                  child: const Text('重新加载'),
+                ),
               ],
             ),
           );
@@ -371,9 +401,13 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
               onTap: () {
                 setState(() {
                   if (isSelected) {
-                    _selectedImageIds.remove(image.id);
+                    if (image.id != null) {
+                      _selectedImageIds.remove(image.id!);
+                    }
                   } else {
-                    _selectedImageIds.add(image.id);
+                    if (image.id != null) {
+                      _selectedImageIds.add(image.id!);
+                    }
                   }
                 });
               },

@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # 数据库
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: zviewer
+      POSTGRES_USER: zviewer
+      POSTGRES_PASSWORD: zviewer123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zviewer -d zviewer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kong API网关
+  kong:
+    image: kong:3.4
+    ports:
+      - "8000:8000"   # Kong Gateway
+      - "8001:8001"   # Kong Admin API
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+    networks:
+      - zviewer-internal
+      - zviewer-external
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 主API服务
+  main-server:
+    build: .
+    environment:
+      - ENVIRONMENT=development
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=zviewer
+      - DB_PASSWORD=zviewer123
+      - DB_NAME=zviewer
+      - DB_SSLMODE=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - JWT_EXPIRATION=24h
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 媒体服务
+  media-service:
+    build: ./services/media
+    environment:
+      - PORT=8081
+      - DATABASE_URL=postgres://zviewer:zviewer123@postgres:5432/zviewer?sslmode=disable
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/uploads/media
+      - MAX_IMAGE_SIZE=104857600
+      - MAX_VIDEO_SIZE=524288000
+      - MAX_CONCURRENT_UPLOADS=10
+      - UPLOAD_TIMEOUT=30
+    volumes:
+      - media_uploads:/uploads/media
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  media_uploads:
+
+networks:
+  zviewer-internal:
+    driver: bridge
+  zviewer-external:
+    driver: bridge

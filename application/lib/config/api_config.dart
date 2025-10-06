@@ -17,4 +17,7 @@ class ApiConfig {
   static void printConfig() {
     AppConfig.printConfig();
   }
+  
+  // Development mode check
+  static bool get isDevelopment => AppConfig.isDevelopment;
 }

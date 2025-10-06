@@ -20,46 +20,63 @@ enum ContentStatus {
 
 @JsonSerializable()
 class ContentItem {
-  final String id;
-  final String title;
-  final String description;
-  final String filePath;
+  final String? id;
+  final String? title;
+  final String? description;
+  final String? filePath;
   final ContentType type;
-  final String userId;
-  final String userName;
+  final String? userId;
+  final String? userName;
   final ContentStatus status;
-  final List<String> categories;
+  final List<String>? categories;
   final DateTime uploadedAt;
   final DateTime? approvedAt;
   final String? approvedBy;
   final String? rejectionReason;
-  final Map<String, dynamic> metadata;
+  final Map<String, dynamic>? metadata;
   final int? fileSize;
   final String? mimeType;
   final String? thumbnailPath;
 
   const ContentItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.filePath,
+    this.id,
+    this.title,
+    this.description,
+    this.filePath,
     required this.type,
-    required this.userId,
-    required this.userName,
+    this.userId,
+    this.userName,
     required this.status,
-    required this.categories,
+    this.categories,
     required this.uploadedAt,
     this.approvedAt,
     this.approvedBy,
     this.rejectionReason,
-    required this.metadata,
+    this.metadata,
     this.fileSize,
     this.mimeType,
     this.thumbnailPath,
   });
 
-  factory ContentItem.fromJson(Map<String, dynamic> json) =>
-      _$ContentItemFromJson(json);
+  factory ContentItem.fromJson(Map<String, dynamic> json) {
+    try {
+      print('🔍 ContentItem.fromJson - Raw JSON: $json');
+      print('🔍 ContentItem.fromJson - id type: ${json['id'].runtimeType}, value: ${json['id']}');
+      print('🔍 ContentItem.fromJson - title type: ${json['title'].runtimeType}, value: ${json['title']}');
+      print('🔍 ContentItem.fromJson - description type: ${json['description'].runtimeType}, value: ${json['description']}');
+      print('🔍 ContentItem.fromJson - filePath type: ${json['filePath'].runtimeType}, value: ${json['filePath']}');
+      print('🔍 ContentItem.fromJson - userId type: ${json['userId'].runtimeType}, value: ${json['userId']}');
+      print('🔍 ContentItem.fromJson - userName type: ${json['userName'].runtimeType}, value: ${json['userName']}');
+      print('🔍 ContentItem.fromJson - categories type: ${json['categories'].runtimeType}, value: ${json['categories']}');
+      print('🔍 ContentItem.fromJson - metadata type: ${json['metadata'].runtimeType}, value: ${json['metadata']}');
+      return _$ContentItemFromJson(json);
+    } catch (e, stackTrace) {
+      print('❌ ContentItem.fromJson ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
+      print('❌ JSON data: $json');
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => _$ContentItemToJson(this);
 
@@ -156,13 +173,13 @@ class ContentItem {
 
   // Validation methods
   bool get isValid {
-    return id.isNotEmpty &&
-        title.isNotEmpty &&
-        description.isNotEmpty &&
-        filePath.isNotEmpty &&
-        userId.isNotEmpty &&
-        userName.isNotEmpty &&
-        categories.isNotEmpty;
+    return (id?.isNotEmpty ?? false) &&
+        (title?.isNotEmpty ?? false) &&
+        (description?.isNotEmpty ?? false) &&
+        (filePath?.isNotEmpty ?? false) &&
+        (userId?.isNotEmpty ?? false) &&
+        (userName?.isNotEmpty ?? false) &&
+        (categories?.isNotEmpty ?? false);
   }
 
   bool get isPending => status == ContentStatus.pending;

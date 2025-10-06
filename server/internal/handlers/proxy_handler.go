@@ -45,8 +45,11 @@ func (h *ProxyHandler) ProxyToMediaService(c *gin.Context) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		// Convert /api/media-proxy/* to /api/media/*
-		req.URL.Path = strings.Replace(req.URL.Path, "/api/media-proxy", "/api/media", 1)
+		// Remove the extra /media from the path since media service expects /api/media not /api/media/media
+		req.URL.Path = strings.Replace(req.URL.Path, "/api/media-proxy/media", "/api/media", 1)
 		req.Host = target.Host
+		// Ensure query parameters are preserved
+		req.URL.RawQuery = req.URL.Query().Encode()
 	}
 
 	// Handle errors

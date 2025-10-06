@@ -385,7 +385,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage>
         _buildStatsRow(album),
         const SizedBox(height: 16),
         // 标签
-        if (album.tags.isNotEmpty) _buildTagsSection(album),
+        if (album.tags?.isNotEmpty ?? false) _buildTagsSection(album),
       ],
     );
   }
@@ -522,7 +522,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage>
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: album.tags.map((tag) {
+          children: (album.tags ?? []).map((tag) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -548,7 +548,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage>
   }
 
   Widget _buildImageGrid(Album album) {
-    if (album.images.isEmpty) {
+    if (album.images?.isEmpty ?? true) {
       return Container(
         height: 200,
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -593,9 +593,9 @@ class _AlbumDetailPageState extends State<AlbumDetailPage>
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
-        itemCount: album.images.length,
+        itemCount: album.images?.length ?? 0,
         itemBuilder: (context, index) {
-          final image = album.images[index];
+          final image = album.images![index];
           return _buildImageThumbnail(image, index);
         },
       ),
@@ -637,18 +637,18 @@ class _AlbumDetailPageState extends State<AlbumDetailPage>
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => MultimediaViewer(
-          mediaPath: image.filePath,
+          mediaPath: image.filePath ?? '',
           onPrevious: index > 0 ? () {
             final album = context.read<AlbumProvider>().currentAlbum ?? widget.album;
             if (index > 0) {
-              final prevImage = album.images[index - 1];
+              final prevImage = album.images![index - 1];
               _openImageViewer(prevImage, index - 1);
             }
           } : null,
           onNext: () {
             final album = context.read<AlbumProvider>().currentAlbum ?? widget.album;
-            if (index < album.images.length - 1) {
-              final nextImage = album.images[index + 1];
+            if (index < (album.images?.length ?? 0) - 1) {
+              final nextImage = album.images![index + 1];
               _openImageViewer(nextImage, index + 1);
             }
           },

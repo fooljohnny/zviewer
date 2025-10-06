@@ -50,18 +50,36 @@ class ImageThumbnail extends StatelessWidget {
 
   String? _getImageUrl() {
     String? url;
+    
+    // 优先使用缩略图路径
     if (thumbnailPath != null && thumbnailPath!.isNotEmpty) {
-      url = '${ApiConfig.mediaUrl}/media/thumbnail/$thumbnailPath';
+      // 如果thumbnailPath已经是完整URL，直接使用
+      if (thumbnailPath!.startsWith('http')) {
+        url = thumbnailPath;
+      } else {
+        // 否则构建完整URL
+        url = '${ApiConfig.mediaUrl}/media/thumbnail/$thumbnailPath';
+      }
     } else if (id != null && id!.isNotEmpty) {
+      // 使用ID获取原始图片
       url = '${ApiConfig.mediaUrl}/media/stream/$id';
+    } else if (filePath != null && filePath!.isNotEmpty) {
+      // 最后尝试使用文件路径
+      if (filePath!.startsWith('http')) {
+        url = filePath;
+      } else {
+        url = '${ApiConfig.mediaUrl}/media/stream/$filePath';
+      }
     }
     
     // 调试信息
-    print('ImageThumbnail URL: $url');
-    print('  - thumbnailPath: $thumbnailPath');
-    print('  - id: $id');
-    print('  - filePath: $filePath');
-    print('  - mimeType: $mimeType');
+    if (ApiConfig.isDevelopment) {
+      print('ImageThumbnail URL: $url');
+      print('  - thumbnailPath: $thumbnailPath');
+      print('  - id: $id');
+      print('  - filePath: $filePath');
+      print('  - mimeType: $mimeType');
+    }
     
     return url;
   }
@@ -124,15 +142,24 @@ class ImageThumbnail extends StatelessWidget {
           height: height,
           fit: fit,
           placeholder: (context, url) {
-            print('Loading image: $url');
+            if (ApiConfig.isDevelopment) {
+              print('Loading image: $url');
+            }
             return _buildPlaceholder();
           },
           errorWidget: (context, url, error) {
-            print('Image load error: $url, error: $error');
-            return _buildErrorWidget();
+            if (ApiConfig.isDevelopment) {
+              print('Image load error: $url, error: $error');
+            }
+            // 尝试使用备用URL
+            return _buildFallbackImage();
           },
           memCacheWidth: memCacheWidth,
           memCacheHeight: memCacheHeight,
+          // 添加重试机制
+          httpHeaders: const {
+            'Accept': 'image/*',
+          },
         ),
       ),
     );
@@ -160,6 +187,52 @@ class ImageThumbnail extends StatelessWidget {
     );
   }
 
+  Widget _buildFallbackImage() {
+    // 尝试使用备用URL
+    String? fallbackUrl = _getFallbackUrl();
+    if (fallbackUrl != null) {
+      if (ApiConfig.isDevelopment) {
+        print('Trying fallback URL: $fallbackUrl');
+      }
+      return CachedNetworkImage(
+        imageUrl: fallbackUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (context, url) => _buildPlaceholder(),
+        errorWidget: (context, url, error) {
+          if (ApiConfig.isDevelopment) {
+            print('Fallback image also failed: $url, error: $error');
+          }
+          return _buildErrorWidget();
+        },
+        memCacheWidth: null,
+        memCacheHeight: null,
+        httpHeaders: const {
+          'Accept': 'image/*',
+        },
+      );
+    }
+    
+    return _buildErrorWidget();
+  }
+
+  String? _getFallbackUrl() {
+    // 如果当前使用的是缩略图，尝试使用原始图片
+    if (thumbnailPath != null && thumbnailPath!.isNotEmpty) {
+      if (id != null && id!.isNotEmpty) {
+        return '${ApiConfig.mediaUrl}/media/stream/$id';
+      } else if (filePath != null && filePath!.isNotEmpty) {
+        if (filePath!.startsWith('http')) {
+          return filePath;
+        } else {
+          return '${ApiConfig.mediaUrl}/media/stream/$filePath';
+        }
+      }
+    }
+    return null;
+  }
+
   Widget _buildErrorWidget() {
     if (errorWidget != null) {
       return errorWidget!;
@@ -173,6 +246,10 @@ class ImageThumbnail extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
         color: Colors.grey[300],
+        border: Border.all(
+          color: Colors.grey[400]!,
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

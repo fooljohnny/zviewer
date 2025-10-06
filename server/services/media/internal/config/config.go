@@ -13,24 +13,24 @@ type Config struct {
 	Port        string
 	DatabaseURL string
 	JWTSecret   string
-	
+
 	// Storage configuration
-	StorageType     string // "local" or "s3"
+	StorageType      string // "local" or "s3"
 	LocalStoragePath string
-	S3Bucket        string
-	S3Region        string
-	S3AccessKey     string
-	S3SecretKey     string
-	
+	S3Bucket         string
+	S3Region         string
+	S3AccessKey      string
+	S3SecretKey      string
+
 	// File limits
 	MaxImageSize int64 // in bytes
 	MaxVideoSize int64 // in bytes
-	
+
 	// Processing configuration
 	ImageThumbnailSize int
 	VideoThumbnailSize int
 	VideoThumbnailTime int // seconds into video
-	
+
 	// Upload limits
 	MaxConcurrentUploads int
 	UploadTimeout        int // minutes
@@ -43,26 +43,26 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Port:        getEnv("PORT", "8081"),
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/zviewer?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://zviewer:zviewer123@localhost:5432/zviewer?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
-		
+
 		// Storage configuration
-		StorageType:     getEnv("STORAGE_TYPE", "local"),
+		StorageType:      getEnv("STORAGE_TYPE", "local"),
 		LocalStoragePath: getEnv("LOCAL_STORAGE_PATH", "./uploads/media"),
-		S3Bucket:        getEnv("S3_BUCKET", ""),
-		S3Region:        getEnv("S3_REGION", "us-east-1"),
-		S3AccessKey:     getEnv("S3_ACCESS_KEY", ""),
-		S3SecretKey:     getEnv("S3_SECRET_KEY", ""),
-		
+		S3Bucket:         getEnv("S3_BUCKET", ""),
+		S3Region:         getEnv("S3_REGION", "us-east-1"),
+		S3AccessKey:      getEnv("S3_ACCESS_KEY", ""),
+		S3SecretKey:      getEnv("S3_SECRET_KEY", ""),
+
 		// File limits (100MB for images, 500MB for videos)
 		MaxImageSize: getEnvAsInt64("MAX_IMAGE_SIZE", 100*1024*1024),
 		MaxVideoSize: getEnvAsInt64("MAX_VIDEO_SIZE", 500*1024*1024),
-		
+
 		// Processing configuration
 		ImageThumbnailSize: getEnvAsInt("IMAGE_THUMBNAIL_SIZE", 300),
 		VideoThumbnailSize: getEnvAsInt("VIDEO_THUMBNAIL_SIZE", 320),
 		VideoThumbnailTime: getEnvAsInt("VIDEO_THUMBNAIL_TIME", 10),
-		
+
 		// Upload limits
 		MaxConcurrentUploads: getEnvAsInt("MAX_CONCURRENT_UPLOADS", 10),
 		UploadTimeout:        getEnvAsInt("UPLOAD_TIMEOUT", 30),

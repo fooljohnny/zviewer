@@ -34,7 +34,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Future<void> _loadInitialData() async {
     final contentProvider = context.read<ContentManagementProvider>();
     final albumProvider = context.read<AlbumProvider>();
-    await contentProvider.loadContent();
+    await contentProvider.loadContent(refresh: true);
     await contentProvider.loadCategories();
     await albumProvider.loadAlbums(refresh: true);
   }

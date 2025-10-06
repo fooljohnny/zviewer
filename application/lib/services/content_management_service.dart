@@ -188,8 +188,8 @@ class ContentManagementService {
         queryParams['categories'] = categories.join(',');
       }
 
-      // 使用媒体服务代理端点
-      final uri = Uri.parse('$_baseUrl/media-proxy/media').replace(
+      // 直接使用媒体服务端点
+      final uri = Uri.parse('$_mediaUrl/media').replace(
         queryParameters: queryParams,
       );
 
@@ -501,15 +501,22 @@ class ContentManagementService {
   /// Create album
   Future<AlbumActionResponse> createAlbum(CreateAlbumRequest request) async {
     try {
+      print('🚀 ContentManagementService.createAlbum - Request: ${request.toJson()}');
       final uri = Uri.parse('$_baseUrl/albums');
+      print('🚀 ContentManagementService.createAlbum - URL: $uri');
+      
       final response = await http.post(
         uri,
         headers: await _headers,
         body: json.encode(request.toJson()),
       );
 
+      print('🚀 ContentManagementService.createAlbum - Response status: ${response.statusCode}');
+      print('🚀 ContentManagementService.createAlbum - Response body: ${response.body}');
+
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
+        print('🚀 ContentManagementService.createAlbum - Parsed data: $data');
         return AlbumActionResponse.fromJson(data);
       } else {
         throw ContentManagementException(
@@ -517,7 +524,9 @@ class ContentManagementService {
           response.statusCode,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ ContentManagementService.createAlbum ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
       throw ContentManagementException('Error creating album: $e');
     }
   }
@@ -785,19 +794,19 @@ class ContentListResponse {
 
 class ContentActionResponse {
   final bool success;
-  final String message;
+  final String? message;
   final ContentItem? content;
 
   ContentActionResponse({
     required this.success,
-    required this.message,
+    this.message,
     this.content,
   });
 
   factory ContentActionResponse.fromJson(Map<String, dynamic> json) {
     return ContentActionResponse(
       success: json['success'] as bool,
-      message: json['message'] as String,
+      message: json['message'] as String?,
       content: json['content'] != null
           ? ContentItem.fromJson(json['content'])
           : null,
@@ -850,7 +859,7 @@ class UploadFile {
 
 class UploadResponse {
   final bool success;
-  final String message;
+  final String? message;
   final List<ContentItem> uploadedContent;
   final int totalFiles;
   final int successfulUploads;
@@ -859,7 +868,7 @@ class UploadResponse {
 
   UploadResponse({
     required this.success,
-    required this.message,
+    this.message,
     required this.uploadedContent,
     required this.totalFiles,
     required this.successfulUploads,
@@ -870,7 +879,7 @@ class UploadResponse {
   factory UploadResponse.fromJson(Map<String, dynamic> json) {
     return UploadResponse(
       success: json['success'] as bool,
-      message: json['message'] as String,
+      message: json['message'] as String?,
       uploadedContent: (json['uploaded_media'] as List? ?? json['uploadedContent'] as List? ?? [])
           .map((item) => ContentItem.fromJson(item))
           .toList(),

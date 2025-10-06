@@ -7,16 +7,16 @@ part of 'content_item.dart';
 // **************************************************************************
 
 ContentItem _$ContentItemFromJson(Map<String, dynamic> json) => ContentItem(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      filePath: json['filePath'] as String,
+      id: json['id'] as String?,
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      filePath: json['filePath'] as String?,
       type: $enumDecode(_$ContentTypeEnumMap, json['type']),
-      userId: json['userId'] as String,
-      userName: json['userName'] as String,
+      userId: json['userId'] as String?,
+      userName: json['userName'] as String?,
       status: $enumDecode(_$ContentStatusEnumMap, json['status']),
-      categories: (json['categories'] as List<dynamic>)
-          .map((e) => e as String)
+      categories: (json['categories'] as List<dynamic>?)
+          ?.map((e) => e as String)
           .toList(),
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
       approvedAt: json['approvedAt'] == null
@@ -24,7 +24,7 @@ ContentItem _$ContentItemFromJson(Map<String, dynamic> json) => ContentItem(
           : DateTime.parse(json['approvedAt'] as String),
       approvedBy: json['approvedBy'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
-      metadata: json['metadata'] as Map<String, dynamic>,
+      metadata: json['metadata'] as Map<String, dynamic>?,
       fileSize: (json['fileSize'] as num?)?.toInt(),
       mimeType: json['mimeType'] as String?,
       thumbnailPath: json['thumbnailPath'] as String?,

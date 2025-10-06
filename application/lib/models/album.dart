@@ -22,16 +22,16 @@ class Album {
   final String? coverImageId; // 封面图片ID
   final String? coverImagePath; // 封面图片路径
   final String? coverThumbnailPath; // 封面缩略图路径
-  final List<String> imageIds; // 图片ID列表
-  final List<ContentItem> images; // 图片列表（从服务器获取）
+  final List<String>? imageIds; // 图片ID列表
+  final List<ContentItem>? images; // 图片列表（从服务器获取）
   final AlbumStatus status;
   final String userId;
   final String userName;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Map<String, dynamic> metadata;
-  final int imageCount; // 图片数量
-  final List<String> tags; // 标签
+  final Map<String, dynamic>? metadata;
+  final int? imageCount; // 图片数量
+  final List<String>? tags; // 标签
   final bool isPublic; // 是否公开
   final int viewCount; // 浏览次数
   final int likeCount; // 点赞次数
@@ -43,22 +43,38 @@ class Album {
     this.coverImageId,
     this.coverImagePath,
     this.coverThumbnailPath,
-    required this.imageIds,
-    required this.images,
+    this.imageIds,
+    this.images,
     required this.status,
     required this.userId,
     required this.userName,
     required this.createdAt,
     required this.updatedAt,
-    required this.metadata,
-    required this.imageCount,
-    required this.tags,
+    this.metadata,
+    this.imageCount,
+    this.tags,
     required this.isPublic,
     required this.viewCount,
     required this.likeCount,
   });
 
-  factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
+  factory Album.fromJson(Map<String, dynamic> json) {
+    try {
+      print('🔍 Album.fromJson - Raw JSON: $json');
+      print('🔍 Album.fromJson - id type: ${json['id'].runtimeType}, value: ${json['id']}');
+      print('🔍 Album.fromJson - title type: ${json['title'].runtimeType}, value: ${json['title']}');
+      print('🔍 Album.fromJson - description type: ${json['description'].runtimeType}, value: ${json['description']}');
+      print('🔍 Album.fromJson - imageIds type: ${json['imageIds'].runtimeType}, value: ${json['imageIds']}');
+      print('🔍 Album.fromJson - tags type: ${json['tags'].runtimeType}, value: ${json['tags']}');
+      print('🔍 Album.fromJson - metadata type: ${json['metadata'].runtimeType}, value: ${json['metadata']}');
+      return _$AlbumFromJson(json);
+    } catch (e, stackTrace) {
+      print('❌ Album.fromJson ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
+      print('❌ JSON data: $json');
+      rethrow;
+    }
+  }
   Map<String, dynamic> toJson() => _$AlbumToJson(this);
 
   Album copyWith({
@@ -173,8 +189,8 @@ class Album {
   bool get isPublished => status == AlbumStatus.published;
   bool get isArchived => status == AlbumStatus.archived;
   bool get hasCover => coverImageId != null && coverImageId!.isNotEmpty;
-  bool get isEmpty => imageIds.isEmpty;
-  bool get isNotEmpty => imageIds.isNotEmpty;
+  bool get isEmpty => imageIds?.isEmpty ?? true;
+  bool get isNotEmpty => imageIds?.isNotEmpty ?? false;
 
   /// 获取封面图片URL，优先使用缩略图
   String? get coverImageUrl => coverThumbnailPath ?? coverImagePath;
@@ -246,7 +262,7 @@ class Album {
   }
   
   /// 获取标签显示文本
-  String get tagsDisplayText => tags.isEmpty ? '无标签' : tags.join(', ');
+  String get tagsDisplayText => (tags?.isEmpty ?? true) ? '无标签' : tags!.join(', ');
   
   /// 获取图片数量显示文本
   String get imageCountDisplayText {
@@ -264,45 +280,61 @@ class Album {
   }
   
   /// 检查是否包含指定图片
-  bool containsImage(String imageId) => imageIds.contains(imageId);
+  bool containsImage(String imageId) => imageIds?.contains(imageId) ?? false;
   
   /// 获取图片在列表中的位置
-  int getImageIndex(String imageId) => imageIds.indexOf(imageId);
+  int getImageIndex(String imageId) => imageIds?.indexOf(imageId) ?? -1;
   
   /// 获取下一张图片ID
   String? getNextImageId(String currentImageId) {
-    final index = imageIds.indexOf(currentImageId);
-    if (index == -1 || index >= imageIds.length - 1) return null;
-    return imageIds[index + 1];
+    if (imageIds == null) return null;
+    final index = imageIds!.indexOf(currentImageId);
+    if (index == -1 || index >= imageIds!.length - 1) return null;
+    return imageIds![index + 1];
   }
   
   /// 获取上一张图片ID
   String? getPreviousImageId(String currentImageId) {
-    final index = imageIds.indexOf(currentImageId);
+    if (imageIds == null) return null;
+    final index = imageIds!.indexOf(currentImageId);
     if (index <= 0) return null;
-    return imageIds[index - 1];
+    return imageIds![index - 1];
   }
 }
 
 /// 图集创建请求
 @JsonSerializable()
 class CreateAlbumRequest {
-  final String title;
-  final String description;
-  final List<String> imageIds;
-  final List<String> tags;
+  final String? title;
+  final String? description;
+  final List<String>? imageIds;
+  final List<String>? tags;
   final bool isPublic;
 
   const CreateAlbumRequest({
-    required this.title,
-    required this.description,
-    required this.imageIds,
-    required this.tags,
+    this.title,
+    this.description,
+    this.imageIds,
+    this.tags,
     required this.isPublic,
   });
 
-  factory CreateAlbumRequest.fromJson(Map<String, dynamic> json) => 
-      _$CreateAlbumRequestFromJson(json);
+  factory CreateAlbumRequest.fromJson(Map<String, dynamic> json) {
+    try {
+      print('🔍 CreateAlbumRequest.fromJson - Raw JSON: $json');
+      print('🔍 CreateAlbumRequest.fromJson - title type: ${json['title'].runtimeType}, value: ${json['title']}');
+      print('🔍 CreateAlbumRequest.fromJson - description type: ${json['description'].runtimeType}, value: ${json['description']}');
+      print('🔍 CreateAlbumRequest.fromJson - imageIds type: ${json['imageIds'].runtimeType}, value: ${json['imageIds']}');
+      print('🔍 CreateAlbumRequest.fromJson - tags type: ${json['tags'].runtimeType}, value: ${json['tags']}');
+      print('🔍 CreateAlbumRequest.fromJson - isPublic type: ${json['isPublic'].runtimeType}, value: ${json['isPublic']}');
+      return _$CreateAlbumRequestFromJson(json);
+    } catch (e, stackTrace) {
+      print('❌ CreateAlbumRequest.fromJson ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
+      print('❌ JSON data: $json');
+      rethrow;
+    }
+  }
   Map<String, dynamic> toJson() => _$CreateAlbumRequestToJson(this);
 }
 
@@ -358,27 +390,39 @@ class AlbumListResponse {
 @JsonSerializable()
 class AlbumActionResponse {
   final bool success;
-  final String message;
+  final String? message;
   final Album? album;
 
   const AlbumActionResponse({
     required this.success,
-    required this.message,
+    this.message,
     this.album,
   });
 
-  factory AlbumActionResponse.fromJson(Map<String, dynamic> json) => 
-      _$AlbumActionResponseFromJson(json);
+  factory AlbumActionResponse.fromJson(Map<String, dynamic> json) {
+    try {
+      print('🔍 AlbumActionResponse.fromJson - Raw JSON: $json');
+      print('🔍 AlbumActionResponse.fromJson - success type: ${json['success'].runtimeType}, value: ${json['success']}');
+      print('🔍 AlbumActionResponse.fromJson - message type: ${json['message'].runtimeType}, value: ${json['message']}');
+      print('🔍 AlbumActionResponse.fromJson - album type: ${json['album'].runtimeType}, value: ${json['album']}');
+      return _$AlbumActionResponseFromJson(json);
+    } catch (e, stackTrace) {
+      print('❌ AlbumActionResponse.fromJson ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
+      print('❌ JSON data: $json');
+      rethrow;
+    }
+  }
   Map<String, dynamic> toJson() => _$AlbumActionResponseToJson(this);
 }
 
 /// 添加图片到图集请求
 @JsonSerializable()
 class AddImageToAlbumRequest {
-  final List<String> imageIds;
+  final List<String>? imageIds;
 
   const AddImageToAlbumRequest({
-    required this.imageIds,
+    this.imageIds,
   });
 
   factory AddImageToAlbumRequest.fromJson(Map<String, dynamic> json) => 
@@ -389,10 +433,10 @@ class AddImageToAlbumRequest {
 /// 从图集移除图片请求
 @JsonSerializable()
 class RemoveImageFromAlbumRequest {
-  final List<String> imageIds;
+  final List<String>? imageIds;
 
   const RemoveImageFromAlbumRequest({
-    required this.imageIds,
+    this.imageIds,
   });
 
   factory RemoveImageFromAlbumRequest.fromJson(Map<String, dynamic> json) => 
@@ -403,10 +447,10 @@ class RemoveImageFromAlbumRequest {
 /// 设置图集封面请求
 @JsonSerializable()
 class SetAlbumCoverRequest {
-  final String imageId;
+  final String? imageId;
 
   const SetAlbumCoverRequest({
-    required this.imageId,
+    this.imageId,
   });
 
   factory SetAlbumCoverRequest.fromJson(Map<String, dynamic> json) => 
@@ -417,32 +461,32 @@ class SetAlbumCoverRequest {
 /// 图集图片模型
 @JsonSerializable()
 class AlbumImage {
-  final String id;
-  final String albumId;
-  final String imageId;
-  final String imagePath;
+  final String? id;
+  final String? albumId;
+  final String? imageId;
+  final String? imagePath;
   final String? thumbnailPath;
   final String? mimeType;
   final int? fileSize;
   final int? width;
   final int? height;
-  final int sortOrder;
-  final DateTime addedAt;
-  final String addedBy;
+  final int? sortOrder;
+  final DateTime? addedAt;
+  final String? addedBy;
 
   const AlbumImage({
-    required this.id,
-    required this.albumId,
-    required this.imageId,
-    required this.imagePath,
+    this.id,
+    this.albumId,
+    this.imageId,
+    this.imagePath,
     this.thumbnailPath,
     this.mimeType,
     this.fileSize,
     this.width,
     this.height,
-    required this.sortOrder,
-    required this.addedAt,
-    required this.addedBy,
+    this.sortOrder,
+    this.addedAt,
+    this.addedBy,
   });
 
   factory AlbumImage.fromJson(Map<String, dynamic> json) => 

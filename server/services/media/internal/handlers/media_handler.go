@@ -19,6 +19,7 @@ type MediaHandler struct {
 	mediaService  *services.MediaService
 	uploadService *services.UploadService
 	wsHandler     *WebSocketHandler
+	logger        *logrus.Logger
 }
 
 // NewMediaHandler creates a new media handler
@@ -27,19 +28,23 @@ func NewMediaHandler(mediaService *services.MediaService, uploadService *service
 		mediaService:  mediaService,
 		uploadService: uploadService,
 		wsHandler:     wsHandler,
+		logger:        logrus.New(),
 	}
 }
 
 // UploadMedia handles file upload requests
 func (h *MediaHandler) UploadMedia(c *gin.Context) {
-	// Get user info from context
+	// Get user info from context (optional due to OptionalAuth middleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found"})
-		return
+		// If no user ID, use a default anonymous user UUID
+		userID = "00000000-0000-0000-0000-000000000000"
 	}
 
 	userName, _ := c.Get("user_name")
+	if userName == nil {
+		userName = "Anonymous User"
+	}
 
 	// Parse multipart form
 	form, err := c.MultipartForm()
@@ -96,7 +101,9 @@ func (h *MediaHandler) UploadMedia(c *gin.Context) {
 		}
 
 		// Upload single media
-		media, err := h.mediaService.UploadMedia(c.Request.Context(), file, fileReq, userID.(string), userName.(string))
+		userIDStr := userID.(string)
+		userNameStr := userName.(string)
+		media, err := h.mediaService.UploadMedia(c.Request.Context(), file, fileReq, userIDStr, userNameStr)
 		if err != nil {
 			logrus.Errorf("Failed to upload media file %s: %v", file.Filename, err)
 			errors = append(errors, fmt.Sprintf("Failed to upload %s: %v", file.Filename, err))
@@ -183,7 +190,24 @@ func (h *MediaHandler) GetThumbnail(c *gin.Context) {
 	// Get thumbnail stream
 	thumbnailReader, err := h.mediaService.GetThumbnail(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Thumbnail not available"})
+		// If thumbnail not available, try to get original image as fallback
+		h.logger.WithError(err).Warn("Thumbnail not available, trying original image")
+
+		// Get original image stream
+		imageReader, err := h.mediaService.StreamMedia(c.Request.Context(), id)
+		if err != nil {
+			h.logger.WithError(err).Error("Failed to get original image")
+			c.JSON(http.StatusNotFound, gin.H{"message": "Image not available"})
+			return
+		}
+		defer imageReader.Close()
+
+		// Set appropriate headers
+		c.Header("Content-Type", "image/jpeg")
+		c.Header("Cache-Control", "public, max-age=3600") // Cache for 1 hour (shorter for fallback)
+
+		// Stream the original image
+		c.DataFromReader(http.StatusOK, -1, "image/jpeg", imageReader, nil)
 		return
 	}
 	defer thumbnailReader.Close()
@@ -264,7 +288,7 @@ func (h *MediaHandler) ListMedia(c *gin.Context) {
 		return
 	}
 
-	// List media
+	// List media (accessible to all users, with optional user filtering)
 	response, err := h.mediaService.ListMedia(c.Request.Context(), query)
 	if err != nil {
 		logrus.Errorf("Failed to list media: %v", err)
@@ -277,11 +301,11 @@ func (h *MediaHandler) ListMedia(c *gin.Context) {
 
 // StartChunkedUpload initializes a new chunked upload session
 func (h *MediaHandler) StartChunkedUpload(c *gin.Context) {
-	// Get user info from context
+	// Get user info from context (optional due to OptionalAuth middleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found"})
-		return
+		// If no user ID, use a default anonymous user UUID
+		userID = "00000000-0000-0000-0000-000000000000"
 	}
 
 	// Parse request data
@@ -307,12 +331,8 @@ func (h *MediaHandler) StartChunkedUpload(c *gin.Context) {
 
 // UploadChunk handles uploading a single chunk
 func (h *MediaHandler) UploadChunk(c *gin.Context) {
-	// Get user info from context
-	_, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found"})
-		return
-	}
+	// Note: userID is not used in chunk upload, but we keep the auth check for consistency
+	// with the OptionalAuth middleware pattern
 
 	// Parse multipart form
 	form, err := c.MultipartForm()

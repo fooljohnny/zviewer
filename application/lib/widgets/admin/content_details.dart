@@ -26,14 +26,16 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
 
   Future<void> _loadAdminActions() async {
     final provider = context.read<ContentManagementProvider>();
-    await provider.loadContentAdminActions(_content.id);
+    if (_content.id != null) {
+      await provider.loadContentAdminActions(_content.id!);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_content.title),
+        title: Text(_content.title ?? 'Unknown Content'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -80,7 +82,7 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
             color: Colors.grey[300],
             child: _content.isImage
                 ? Image.network(
-                    _content.filePath,
+                    _content.filePath ?? '',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return const Center(
@@ -139,17 +141,17 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            _InfoRow(label: 'Title', value: _content.title),
-            _InfoRow(label: 'Description', value: _content.description),
+            _InfoRow(label: 'Title', value: _content.title ?? 'Unknown'),
+            _InfoRow(label: 'Description', value: _content.description ?? 'No description'),
             _InfoRow(label: 'Type', value: _content.type.name.toUpperCase()),
-            _InfoRow(label: 'User', value: _content.userName),
-            _InfoRow(label: 'User ID', value: _content.userId),
-            _InfoRow(label: 'File Path', value: _content.filePath),
+            _InfoRow(label: 'User', value: _content.userName ?? 'Unknown'),
+            _InfoRow(label: 'User ID', value: _content.userId ?? 'Unknown'),
+            _InfoRow(label: 'File Path', value: _content.filePath ?? 'Unknown'),
             _InfoRow(
               label: 'Categories',
-              value: _content.categories.isEmpty
+              value: (_content.categories?.isEmpty ?? true)
                   ? 'None'
-                  : _content.categories.join(', '),
+                  : _content.categories!.join(', '),
             ),
             if (_content.approvedAt != null)
               _InfoRow(
@@ -264,7 +266,9 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
   Future<void> _approveContent(ContentManagementProvider provider) async {
     setState(() => _isLoading = true);
     try {
-      await provider.approveContent(_content.id);
+        if (_content.id != null) {
+          await provider.approveContent(_content.id!);
+        }
       setState(() {
         _content = _content.copyWith(
           status: ContentStatus.approved,
@@ -292,7 +296,9 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
     if (reason != null && reason.isNotEmpty) {
       setState(() => _isLoading = true);
       try {
-        await provider.rejectContent(_content.id, reason);
+        if (_content.id != null) {
+          await provider.rejectContent(_content.id!, reason);
+        }
         setState(() {
           _content = _content.copyWith(
             status: ContentStatus.rejected,
@@ -347,7 +353,9 @@ class _ContentDetailsViewState extends State<ContentDetailsView> {
       if (reason != null && reason.isNotEmpty) {
         setState(() => _isLoading = true);
         try {
-          await provider.deleteContent(_content.id, reason);
+          if (_content.id != null) {
+            await provider.deleteContent(_content.id!, reason);
+          }
           if (mounted) {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(

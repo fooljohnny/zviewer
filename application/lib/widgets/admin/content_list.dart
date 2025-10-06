@@ -163,10 +163,12 @@ class _ContentManagementViewState extends State<ContentManagementView> {
         final content = provider.content[index];
         return _ContentCard(
           content: content,
-          isSelected: provider.selectedContentIds.contains(content.id),
+          isSelected: content.id != null && provider.selectedContentIds.contains(content.id!),
           onTap: () => _showContentDetails(context, content),
           onSelectionChanged: (selected) {
-            provider.toggleContentSelection(content.id, selected);
+            if (content.id != null) {
+              provider.toggleContentSelection(content.id!, selected);
+            }
           },
         );
       },
@@ -181,10 +183,12 @@ class _ContentManagementViewState extends State<ContentManagementView> {
         final content = provider.content[index];
         return _ContentListItem(
           content: content,
-          isSelected: provider.selectedContentIds.contains(content.id),
+          isSelected: content.id != null && provider.selectedContentIds.contains(content.id!),
           onTap: () => _showContentDetails(context, content),
           onSelectionChanged: (selected) {
-            provider.toggleContentSelection(content.id, selected);
+            if (content.id != null) {
+              provider.toggleContentSelection(content.id!, selected);
+            }
           },
         );
       },
@@ -232,7 +236,7 @@ class _ContentCard extends StatelessWidget {
                     color: Colors.grey[300],
                     child: content.isImage
                         ? Image.network(
-                            content.filePath,
+                            content.filePath ?? '',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return const Icon(Icons.broken_image, size: 48);
@@ -267,7 +271,7 @@ class _ContentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      content.title,
+                      content.title ?? 'Unknown',
                       style: Theme.of(context).textTheme.titleSmall,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -332,7 +336,7 @@ class _ContentListItem extends StatelessWidget {
           value: isSelected,
           onChanged: (value) => onSelectionChanged(value ?? false),
         ),
-        title: Text(content.title),
+        title: Text(content.title ?? 'Unknown'),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

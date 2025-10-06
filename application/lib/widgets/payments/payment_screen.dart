@@ -54,8 +54,8 @@ class _PaymentScreenState extends State<PaymentScreen> with SingleTickerProvider
                 return const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 );

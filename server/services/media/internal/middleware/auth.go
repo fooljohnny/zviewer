@@ -47,7 +47,7 @@ func AuthRequired(secret string) gin.HandlerFunc {
 			}
 
 			userName, _ := claims["user_name"].(string)
-			
+
 			// Set user information in context
 			c.Set("user_id", userID)
 			c.Set("user_name", userName)
@@ -55,6 +55,51 @@ func AuthRequired(secret string) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token claims"})
 			c.Abort()
 			return
+		}
+
+		c.Next()
+	}
+}
+
+// OptionalAuth middleware validates JWT tokens if present, but allows requests without tokens
+func OptionalAuth(secret string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			// No auth header, continue without authentication
+			c.Next()
+			return
+		}
+
+		// Extract token from "Bearer <token>"
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			// Invalid format, continue without authentication
+			c.Next()
+			return
+		}
+
+		// Parse and validate token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+
+		if err != nil || !token.Valid {
+			// Invalid token, continue without authentication
+			c.Next()
+			return
+		}
+
+		// Extract claims
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			userID, ok := claims["user_id"].(string)
+			if ok {
+				userName, _ := claims["user_name"].(string)
+
+				// Set user information in context
+				c.Set("user_id", userID)
+				c.Set("user_name", userName)
+			}
 		}
 
 		c.Next()

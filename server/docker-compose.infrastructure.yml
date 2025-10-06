@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # 数据库
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: zviewer
+      POSTGRES_USER: zviewer
+      POSTGRES_PASSWORD: zviewer123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zviewer -d zviewer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Consul服务发现
+  consul:
+    image: consul:1.15
+    ports:
+      - "8500:8500"
+    volumes:
+      - ./consul/consul.json:/consul/config/consul.json:ro
+      - ./consul/services:/consul/config/services:ro
+    command: consul agent -config-dir=/consul/config
+    networks:
+      - zviewer-internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kong API网关
+  kong:
+    image: kong:3.4
+    ports:
+      - "8002:8000"   # Kong Gateway
+      - "8003:8001"   # Kong Admin API
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+    volumes:
+      - ./kong/kong.yml:/kong/kong.yml:ro
+    networks:
+      - zviewer-internal
+      - zviewer-external
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  zviewer-internal:
+    driver: bridge
+  zviewer-external:
+    driver: bridge

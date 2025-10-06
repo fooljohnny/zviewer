@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../providers/content_management_provider.dart';
-import '../../providers/album_provider.dart';
 import '../../services/content_management_service.dart';
 import '../../models/content_item.dart';
-import '../../models/album.dart';
 import '../common/glassmorphism_card.dart';
 import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
@@ -40,7 +38,7 @@ class _AdminResourceManagementState extends State<AdminResourceManagement> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ContentManagementProvider>().loadContent();
+      context.read<ContentManagementProvider>().loadContent(refresh: true);
     });
   }
 
@@ -395,6 +393,14 @@ class _AdminResourceManagementState extends State<AdminResourceManagement> {
         setState(() {
           _selectedTabIndex = index;
         });
+        
+        // 当切换到文件管理页面时，刷新数据
+        if (index == 0) {
+          final provider = context.read<ContentManagementProvider>();
+          provider.loadContent(refresh: true);
+          // 清除可能存在的重复数据
+          provider.removeDuplicates();
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -925,7 +931,12 @@ class _AdminResourceManagementState extends State<AdminResourceManagement> {
             // 缩略图区域
             Expanded(
               flex: 3,
-              child: Stack(
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: 120,
+                  maxHeight: 140,
+                ),
+                child: Stack(
                 children: [
                   // 图片缩略图
                   ClipRRect(
@@ -1041,66 +1052,72 @@ class _AdminResourceManagementState extends State<AdminResourceManagement> {
                       ),
                     ),
                 ],
+                ),
               ),
             ),
             // 文件信息区域
             Container(
-              height: 80, // 固定高度确保有足够空间显示文件名
-              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(
+                minHeight: 70,
+                maxHeight: 80, // 进一步减少最大高度
+              ),
+              padding: const EdgeInsets.fromLTRB(4, 3, 4, 3), // 进一步减少padding
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // 文件名 - 占用更多空间
-                  Flexible(
+                  Expanded(
                     flex: 2,
                     child: Text(
                       media.title ?? '未知文件',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 10, // 进一步减小字体
                         fontWeight: FontWeight.w600,
+                        height: 1.1, // 进一步减少行高
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 4),
                   // 文件类型和大小 - 使用剩余空间
-                  Flexible(
+                  Expanded(
                     flex: 1,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         // 文件类型
                         Text(
                           _getFileTypeDisplayName(media),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
-                            fontSize: 10,
+                            fontSize: 7, // 进一步减小字体
                             fontWeight: FontWeight.w500,
+                            height: 1.0, // 进一步减少行高
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
                         // 文件大小
                         Text(
                           _formatFileSize(media.fileSize),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
-                            fontSize: 9,
+                            fontSize: 6, // 进一步减小字体
+                            height: 1.0, // 进一步减少行高
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
                         // 上传时间
                         Text(
                           _formatDate(media.uploadedAt),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.5),
-                            fontSize: 9,
+                            fontSize: 6, // 进一步减小字体
+                            height: 1.0, // 进一步减少行高
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

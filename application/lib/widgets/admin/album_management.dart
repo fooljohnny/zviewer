@@ -17,7 +17,7 @@ class AlbumManagementView extends StatefulWidget {
 class _AlbumManagementViewState extends State<AlbumManagementView> {
   bool _isGridView = true;
   String _sortBy = 'createdAt';
-  String _sortOrder = 'desc';
+  final String _sortOrder = 'desc';
 
   @override
   void initState() {
@@ -226,9 +226,9 @@ class _AlbumManagementViewState extends State<AlbumManagementView> {
                       size: 16,
                     ),
                     const SizedBox(width: 4),
-                    Text(
+                    const Text(
                       '排序',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
                       ),

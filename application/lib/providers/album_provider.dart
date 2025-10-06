@@ -63,18 +63,25 @@ class AlbumProvider extends ChangeNotifier {
 
   /// 创建图集
   Future<void> createAlbum(CreateAlbumRequest request) async {
+    print('🚀 AlbumProvider.createAlbum - Request: ${request.toJson()}');
     _setLoading(true);
     try {
       final response = await _service.createAlbum(request);
+      print('🚀 AlbumProvider.createAlbum - Response: success=${response.success}, message=${response.message}, album=${response.album?.id}');
+      
       if (response.success && response.album != null) {
         _albums.insert(0, response.album!);
         _totalAlbums++;
         _error = null;
         notifyListeners();
+        print('✅ AlbumProvider.createAlbum - Album created successfully: ${response.album!.id}');
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
+        print('❌ AlbumProvider.createAlbum - Failed: ${response.message}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ AlbumProvider.createAlbum ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
       _error = e.toString();
       if (kDebugMode) {
         print('Error creating album: $e');
@@ -170,7 +177,7 @@ class AlbumProvider extends ChangeNotifier {
         
         notifyListeners();
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -203,7 +210,7 @@ class AlbumProvider extends ChangeNotifier {
         _error = null;
         notifyListeners();
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -233,7 +240,7 @@ class AlbumProvider extends ChangeNotifier {
         _error = null;
         notifyListeners();
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -258,7 +265,7 @@ class AlbumProvider extends ChangeNotifier {
         await getAlbum(albumId);
         _error = null;
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -283,7 +290,7 @@ class AlbumProvider extends ChangeNotifier {
         await getAlbum(albumId);
         _error = null;
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -308,7 +315,7 @@ class AlbumProvider extends ChangeNotifier {
         await getAlbum(albumId);
         _error = null;
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 
 /// 图集详情页手势处理器
 /// 处理右滑返回手势

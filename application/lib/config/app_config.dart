@@ -18,7 +18,7 @@ class AppConfig {
         'environment': 'development',
         'api': {
           'development': {
-            'baseUrl': 'http://localhost:8080',
+            'baseUrl': 'http://localhost:8002', // Kong网关端口
             'timeout': 30000,
             'retryAttempts': 3
           },
@@ -47,12 +47,12 @@ class AppConfig {
   // Get the appropriate base URL based on environment
   static String get baseUrl => _isDevelopment ? _devBaseUrl : _prodBaseUrl;
   
-  // API endpoints
+  // API endpoints - 通过Kong网关统一访问
   static String get authUrl => '$baseUrl/api/auth';
   static String get commentsUrl => '$baseUrl/api/comments';
   static String get paymentsUrl => '$baseUrl/api/payments';
   static String get adminUrl => '$baseUrl/api/admin';
-  static String get mediaUrl => 'http://localhost:8081/api'; // 媒体服务独立端口
+  static String get mediaUrl => '$baseUrl/api'; // 通过Kong网关访问媒体服务
   static String get publicUrl => '$baseUrl/api/public';
   static String get healthUrl => '$baseUrl/health';
   

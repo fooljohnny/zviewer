@@ -2,12 +2,14 @@ package repositories
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"zviewer-server/internal/models"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +29,18 @@ func NewAlbumRepository(db *sql.DB, logger *logrus.Logger) *AlbumRepository {
 
 // Create creates a new album
 func (r *AlbumRepository) Create(album *models.Album) error {
+	// Serialize metadata to JSON
+	metadataJSON, err := json.Marshal(album.Metadata)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal metadata")
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	// Convert tags to PostgreSQL array format
+	// PostgreSQL expects array format like {"tag1","tag2","tag3"}
+	// Use pq.Array to properly convert Go slice to PostgreSQL array
+	tagsArray := pq.Array(album.Tags)
+
 	query := `
 		INSERT INTO albums (id, title, description, status, user_id, created_at, updated_at, 
 		                   metadata, is_public, view_count, like_count, tags)
@@ -35,11 +49,11 @@ func (r *AlbumRepository) Create(album *models.Album) error {
 
 	args := []interface{}{
 		album.ID, album.Title, album.Description, album.Status, album.UserID,
-		album.CreatedAt, album.UpdatedAt, album.Metadata, album.IsPublic,
-		album.ViewCount, album.LikeCount, album.Tags,
+		album.CreatedAt, album.UpdatedAt, string(metadataJSON), album.IsPublic,
+		album.ViewCount, album.LikeCount, tagsArray,
 	}
 
-	err := r.db.QueryRow(query, args...).Scan(&album.ID, &album.CreatedAt, &album.UpdatedAt)
+	err = r.db.QueryRow(query, args...).Scan(&album.ID, &album.CreatedAt, &album.UpdatedAt)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to create album")
 		return fmt.Errorf("failed to create album: %w", err)
@@ -58,11 +72,13 @@ func (r *AlbumRepository) GetByID(id string) (*models.Album, error) {
 		WHERE id = $1`
 
 	album := &models.Album{}
+	var metadataJSON []byte
+	var tagsArray pq.StringArray
 	err := r.db.QueryRow(query, id).Scan(
 		&album.ID, &album.Title, &album.Description, &album.CoverImageID,
 		&album.CoverImagePath, &album.CoverThumbnailPath, &album.Status,
-		&album.UserID, &album.CreatedAt, &album.UpdatedAt, &album.Metadata,
-		&album.IsPublic, &album.ViewCount, &album.LikeCount, &album.Tags,
+		&album.UserID, &album.CreatedAt, &album.UpdatedAt, &metadataJSON,
+		&album.IsPublic, &album.ViewCount, &album.LikeCount, &tagsArray,
 	)
 
 	if err != nil {
@@ -73,9 +89,22 @@ func (r *AlbumRepository) GetByID(id string) (*models.Album, error) {
 		return nil, fmt.Errorf("failed to get album: %w", err)
 	}
 
+	// Deserialize metadata from JSON
+	if len(metadataJSON) > 0 {
+		if err := json.Unmarshal(metadataJSON, &album.Metadata); err != nil {
+			r.logger.WithError(err).Warn("Failed to unmarshal metadata, using empty map")
+			album.Metadata = make(map[string]interface{})
+		}
+	} else {
+		album.Metadata = make(map[string]interface{})
+	}
+
+	// Convert pq.StringArray to []string
+	album.Tags = []string(tagsArray)
+
 	// Get image count
 	album.ImageCount = r.getImageCount(album.ID)
-	
+
 	// Get images if needed
 	if album.ImageCount > 0 {
 		images, err := r.GetAlbumImages(album.ID)
@@ -110,16 +139,31 @@ func (r *AlbumRepository) GetByUserID(userID string, limit, offset int) ([]*mode
 	var albums []*models.Album
 	for rows.Next() {
 		album := &models.Album{}
+		var metadataJSON []byte
+		var tagsArray pq.StringArray
 		err := rows.Scan(
 			&album.ID, &album.Title, &album.Description, &album.CoverImageID,
 			&album.CoverImagePath, &album.CoverThumbnailPath, &album.Status,
-			&album.UserID, &album.CreatedAt, &album.UpdatedAt, &album.Metadata,
-			&album.IsPublic, &album.ViewCount, &album.LikeCount, &album.Tags,
+			&album.UserID, &album.CreatedAt, &album.UpdatedAt, &metadataJSON,
+			&album.IsPublic, &album.ViewCount, &album.LikeCount, &tagsArray,
 		)
 		if err != nil {
 			r.logger.WithError(err).Error("Failed to scan album row")
 			continue
 		}
+
+		// Deserialize metadata from JSON
+		if len(metadataJSON) > 0 {
+			if err := json.Unmarshal(metadataJSON, &album.Metadata); err != nil {
+				r.logger.WithError(err).Warn("Failed to unmarshal metadata, using empty map")
+				album.Metadata = make(map[string]interface{})
+			}
+		} else {
+			album.Metadata = make(map[string]interface{})
+		}
+
+		// Convert pq.StringArray to []string
+		album.Tags = []string(tagsArray)
 
 		// Get image count
 		album.ImageCount = r.getImageCount(album.ID)
@@ -150,16 +194,31 @@ func (r *AlbumRepository) GetPublic(limit, offset int) ([]*models.Album, error) 
 	var albums []*models.Album
 	for rows.Next() {
 		album := &models.Album{}
+		var metadataJSON []byte
+		var tagsArray pq.StringArray
 		err := rows.Scan(
 			&album.ID, &album.Title, &album.Description, &album.CoverImageID,
 			&album.CoverImagePath, &album.CoverThumbnailPath, &album.Status,
-			&album.UserID, &album.CreatedAt, &album.UpdatedAt, &album.Metadata,
-			&album.IsPublic, &album.ViewCount, &album.LikeCount, &album.Tags,
+			&album.UserID, &album.CreatedAt, &album.UpdatedAt, &metadataJSON,
+			&album.IsPublic, &album.ViewCount, &album.LikeCount, &tagsArray,
 		)
 		if err != nil {
 			r.logger.WithError(err).Error("Failed to scan album row")
 			continue
 		}
+
+		// Deserialize metadata from JSON
+		if len(metadataJSON) > 0 {
+			if err := json.Unmarshal(metadataJSON, &album.Metadata); err != nil {
+				r.logger.WithError(err).Warn("Failed to unmarshal metadata, using empty map")
+				album.Metadata = make(map[string]interface{})
+			}
+		} else {
+			album.Metadata = make(map[string]interface{})
+		}
+
+		// Convert pq.StringArray to []string
+		album.Tags = []string(tagsArray)
 
 		// Get image count
 		album.ImageCount = r.getImageCount(album.ID)
@@ -171,6 +230,16 @@ func (r *AlbumRepository) GetPublic(limit, offset int) ([]*models.Album, error) 
 
 // Update updates an album
 func (r *AlbumRepository) Update(album *models.Album) error {
+	// Serialize metadata to JSON
+	metadataJSON, err := json.Marshal(album.Metadata)
+	if err != nil {
+		r.logger.WithError(err).Error("Failed to marshal metadata")
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	// Convert tags to PostgreSQL array format
+	tagsArray := pq.Array(album.Tags)
+
 	query := `
 		UPDATE albums 
 		SET title = $2, description = $3, cover_image_id = $4, cover_image_path = $5,
@@ -178,11 +247,11 @@ func (r *AlbumRepository) Update(album *models.Album) error {
 		    is_public = $10, view_count = $11, like_count = $12, tags = $13
 		WHERE id = $1`
 
-	_, err := r.db.Exec(query,
+	_, err = r.db.Exec(query,
 		album.ID, album.Title, album.Description, album.CoverImageID,
 		album.CoverImagePath, album.CoverThumbnailPath, album.Status,
-		album.UpdatedAt, album.Metadata, album.IsPublic,
-		album.ViewCount, album.LikeCount, album.Tags,
+		album.UpdatedAt, string(metadataJSON), album.IsPublic,
+		album.ViewCount, album.LikeCount, tagsArray,
 	)
 
 	if err != nil {
@@ -196,7 +265,7 @@ func (r *AlbumRepository) Update(album *models.Album) error {
 // Delete deletes an album
 func (r *AlbumRepository) Delete(id string) error {
 	query := `DELETE FROM albums WHERE id = $1`
-	
+
 	_, err := r.db.Exec(query, id)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to delete album")
@@ -259,7 +328,7 @@ func (r *AlbumRepository) AddImageToAlbum(albumID, imageID, imagePath, addedBy s
 // RemoveImageFromAlbum removes an image from an album
 func (r *AlbumRepository) RemoveImageFromAlbum(albumID, imageID string) error {
 	query := `DELETE FROM album_images WHERE album_id = $1 AND image_id = $2`
-	
+
 	_, err := r.db.Exec(query, albumID, imageID)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to remove image from album")
@@ -288,7 +357,7 @@ func (r *AlbumRepository) SetAlbumCover(albumID, imageID, imagePath, thumbnailPa
 // GetImageCount returns the number of images in an album
 func (r *AlbumRepository) getImageCount(albumID string) int {
 	query := `SELECT COUNT(*) FROM album_images WHERE album_id = $1`
-	
+
 	var count int
 	err := r.db.QueryRow(query, albumID).Scan(&count)
 	if err != nil {
@@ -309,7 +378,7 @@ func (r *AlbumRepository) SearchAlbums(query string, userID *string, limit, offs
 		WHERE (title ILIKE $1 OR description ILIKE $1 OR $2 = ANY(tags))`
 
 	args := []interface{}{"%" + query + "%", query}
-	
+
 	if userID != nil {
 		searchQuery += " AND user_id = $3"
 		args = append(args, *userID)
@@ -351,7 +420,7 @@ func (r *AlbumRepository) SearchAlbums(query string, userID *string, limit, offs
 func (r *AlbumRepository) GetAlbumCount(userID *string) (int, error) {
 	query := `SELECT COUNT(*) FROM albums`
 	args := []interface{}{}
-	
+
 	if userID != nil {
 		query += " WHERE user_id = $1"
 		args = append(args, *userID)

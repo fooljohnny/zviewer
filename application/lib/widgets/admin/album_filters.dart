@@ -89,20 +89,20 @@ class _AlbumFiltersState extends State<AlbumFilters> {
                   onChanged: (value) {
                     provider.setStatusFilter(value);
                   },
-                  items: [
-                    const DropdownMenuItem<AlbumStatus?>(
+                  items: const [
+                    DropdownMenuItem<AlbumStatus?>(
                       value: null,
                       child: Text('All Status'),
                     ),
-                    const DropdownMenuItem<AlbumStatus?>(
+                    DropdownMenuItem<AlbumStatus?>(
                       value: AlbumStatus.draft,
                       child: Text('Draft'),
                     ),
-                    const DropdownMenuItem<AlbumStatus?>(
+                    DropdownMenuItem<AlbumStatus?>(
                       value: AlbumStatus.published,
                       child: Text('Published'),
                     ),
-                    const DropdownMenuItem<AlbumStatus?>(
+                    DropdownMenuItem<AlbumStatus?>(
                       value: AlbumStatus.archived,
                       child: Text('Archived'),
                     ),

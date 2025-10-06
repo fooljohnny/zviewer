@@ -25,15 +25,22 @@ class AlbumService {
   /// 创建图集
   Future<AlbumActionResponse> createAlbum(CreateAlbumRequest request) async {
     try {
+      print('🚀 AlbumService.createAlbum - Request: ${request.toJson()}');
       final uri = Uri.parse('$_baseUrl/albums');
+      print('🚀 AlbumService.createAlbum - URL: $uri');
+      
       final response = await http.post(
         uri,
         headers: await _headers,
         body: json.encode(request.toJson()),
       );
 
+      print('🚀 AlbumService.createAlbum - Response status: ${response.statusCode}');
+      print('🚀 AlbumService.createAlbum - Response body: ${response.body}');
+
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
+        print('🚀 AlbumService.createAlbum - Parsed data: $data');
         return AlbumActionResponse.fromJson(data);
       } else {
         throw AlbumServiceException(
@@ -41,7 +48,9 @@ class AlbumService {
           response.statusCode,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ AlbumService.createAlbum ERROR: $e');
+      print('❌ Stack trace: $stackTrace');
       if (e is AlbumServiceException) {
         rethrow;
       }

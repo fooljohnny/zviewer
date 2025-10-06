@@ -86,7 +86,7 @@ class ContentManagementProvider extends ChangeNotifier {
         _error = null;
         notifyListeners();
       } else {
-        _error = response.message;
+        _error = response.message ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -124,7 +124,10 @@ class ContentManagementProvider extends ChangeNotifier {
       if (refresh) {
         _content = response.content;
       } else {
-        _content.addAll(response.content);
+        // 避免重复添加相同的内容
+        final existingIds = _content.map((item) => item.id).toSet();
+        final newContent = response.content.where((item) => !existingIds.contains(item.id)).toList();
+        _content.addAll(newContent);
       }
 
       _totalPages = response.totalPages;
@@ -367,7 +370,7 @@ class ContentManagementProvider extends ChangeNotifier {
   }
 
   void selectAllContent() {
-    _selectedContentIds = _content.map((item) => item.id).toSet();
+    _selectedContentIds = _content.map((item) => item.id).where((id) => id != null).cast<String>().toSet();
     notifyListeners();
   }
 
@@ -423,5 +426,12 @@ class ContentManagementProvider extends ChangeNotifier {
       loadCategories(),
       loadRecentActions(),
     ]);
+  }
+
+  // 清除重复数据
+  void removeDuplicates() {
+    final seen = <String>{};
+    _content = _content.where((item) => item.id != null && seen.add(item.id!)).toList();
+    notifyListeners();
   }
 }

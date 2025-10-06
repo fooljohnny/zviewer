@@ -233,7 +233,7 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
               ],
             ),
             const SizedBox(height: 16),
-            if (album.images.isEmpty)
+            if (album.images?.isEmpty ?? true)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
@@ -258,13 +258,13 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
                 ),
-                itemCount: album.images.length,
+                itemCount: album.images?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final image = album.images[index];
+                  final image = album.images![index];
                   return _ImageThumbnail(
                     image: image,
                     isCover: album.coverImageId == image.id,
-                    onSetCover: () => _setCoverImage(context, album, image.id),
+                    onSetCover: () => image.id != null ? _setCoverImage(context, album, image.id!) : null,
                   );
                 },
               ),
@@ -491,7 +491,7 @@ class _ImageThumbnail extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              image.filePath,
+              image.filePath ?? '',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(Icons.broken_image, size: 32);

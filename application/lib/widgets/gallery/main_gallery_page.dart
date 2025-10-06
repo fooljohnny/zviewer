@@ -43,7 +43,7 @@ class _MainGalleryPageState extends State<MainGalleryPage>
 
   void _loadInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ContentManagementProvider>().loadContent();
+      context.read<ContentManagementProvider>().loadContent(refresh: true);
     });
   }
 

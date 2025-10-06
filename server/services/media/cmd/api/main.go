@@ -77,7 +77,7 @@ func main() {
 	api := router.Group("/api")
 	{
 		media := api.Group("/media")
-		media.Use(middleware.AuthRequired(cfg.JWTSecret))
+		media.Use(middleware.OptionalAuth(cfg.JWTSecret))
 		{
 			media.POST("/upload", mediaHandler.UploadMedia)
 			media.POST("/chunked/start", mediaHandler.StartChunkedUpload)

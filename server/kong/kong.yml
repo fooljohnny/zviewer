@@ -1,13 +1,17 @@
 _format_version: "3.0"
 
 services:
+  # 主API服务 - 认证和用户管理
   - name: main-server
-    url: http://main-server:8080
+    url: http://host.docker.internal:8080
     routes:
       - name: main-server-route
         paths:
           - /api/auth
           - /api/users
+          - /api/albums
+          - /api/public
+          - /api/admin
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -38,120 +42,17 @@ services:
           credentials: true
           max_age: 3600
 
+  # 媒体服务 - 文件上传和管理
   - name: media-service
-    url: http://media-service:8081
+    url: http://host.docker.internal:8081
     routes:
       - name: media-service-route
         paths:
           - /api/media
         strip_path: false
-    plugins:
-      - name: rate-limiting
-        config:
-          minute: 50
-          hour: 500
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: true
-          max_age: 3600
-
-  - name: comments-service
-    url: http://comments-service:8082
-    routes:
-      - name: comments-service-route
+      - name: media-service-health-route
         paths:
-          - /api/comments
-        strip_path: false
-    plugins:
-      - name: rate-limiting
-        config:
-          minute: 200
-          hour: 2000
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: true
-          max_age: 3600
-
-  - name: payments-service
-    url: http://payments-service:8083
-    routes:
-      - name: payments-service-route
-        paths:
-          - /api/payments
-        strip_path: false
-    plugins:
-      - name: rate-limiting
-        config:
-          minute: 30
-          hour: 300
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: true
-          max_age: 3600
-
-  - name: admin-service
-    url: http://admin-service:8084
-    routes:
-      - name: admin-service-route
-        paths:
-          - /api/admin
+          - /api/health
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -181,6 +82,115 @@ services:
             - X-Auth-Token
           credentials: true
           max_age: 3600
+
+  # 注释掉未运行的服务以避免name resolution failed错误
+  # - name: comments-service
+  #   url: http://comments-service:8082
+  #   routes:
+  #     - name: comments-service-route
+  #       paths:
+  #         - /api/comments
+  #       strip_path: false
+  #   plugins:
+  #     - name: rate-limiting
+  #       config:
+  #         minute: 200
+  #         hour: 2000
+  #     - name: cors
+  #       config:
+  #         origins:
+  #           - "*"
+  #         methods:
+  #           - GET
+  #           - POST
+  #           - PUT
+  #           - DELETE
+  #           - OPTIONS
+  #         headers:
+  #           - Accept
+  #           - Accept-Version
+  #           - Content-Length
+  #           - Content-MD5
+  #           - Content-Type
+  #           - Date
+  #           - X-Auth-Token
+  #           - Authorization
+  #         exposed_headers:
+  #           - X-Auth-Token
+  #         credentials: true
+  #         max_age: 3600
+
+  # - name: payments-service
+  #   url: http://payments-service:8083
+  #   routes:
+  #     - name: payments-service-route
+  #       paths:
+  #         - /api/payments
+  #       strip_path: false
+  #   plugins:
+  #     - name: rate-limiting
+  #       config:
+  #         minute: 30
+  #         hour: 300
+  #     - name: cors
+  #       config:
+  #         origins:
+  #           - "*"
+  #         methods:
+  #           - GET
+  #           - POST
+  #           - PUT
+  #           - DELETE
+  #           - OPTIONS
+  #         headers:
+  #           - Accept
+  #           - Accept-Version
+  #           - Content-Length
+  #           - Content-MD5
+  #           - Content-Type
+  #           - Date
+  #           - X-Auth-Token
+  #           - Authorization
+  #         exposed_headers:
+  #           - X-Auth-Token
+  #         credentials: true
+  #         max_age: 3600
+
+  # - name: admin-service
+  #   url: http://admin-service:8084
+  #   routes:
+  #     - name: admin-service-route
+  #       paths:
+  #         - /api/admin
+  #       strip_path: false
+  #   plugins:
+  #     - name: rate-limiting
+  #       config:
+  #         minute: 50
+  #         hour: 500
+  #     - name: cors
+  #       config:
+  #         origins:
+  #           - "*"
+  #         methods:
+  #           - GET
+  #           - POST
+  #           - PUT
+  #           - DELETE
+  #           - OPTIONS
+  #         headers:
+  #           - Accept
+  #           - Accept-Version
+  #           - Content-Length
+  #           - Content-MD5
+  #           - Content-Type
+  #           - Date
+  #           - X-Auth-Token
+  #           - Authorization
+  #         exposed_headers:
+  #           - X-Auth-Token
+  #         credentials: true
+  #         max_age: 3600
 
 consumers:
   - username: zviewer-client

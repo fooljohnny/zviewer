@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
-import '../../services/danmaku_service.dart';
 
 /// 弹幕评论覆盖层组件
 /// 在媒体文件上显示半透明飘过的评论
@@ -334,8 +333,8 @@ class _DanmakuInputState extends State<DanmakuInput> {
                 ),
                 child: widget.isLoading
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),

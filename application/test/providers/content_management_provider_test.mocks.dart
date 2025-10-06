@@ -142,6 +142,61 @@ class MockContentManagementService extends _i1.Mock
       ) as _i6.Future<_i2.UploadResponse>);
 
   @override
+  _i6.Future<_i2.ContentListResponse> getContent({
+    int? page = 1,
+    int? limit = 20,
+    _i3.ContentStatus? status,
+    _i3.ContentType? type,
+    String? searchQuery,
+    String? userFilter,
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? categories,
+    String? sortBy = 'uploadedAt',
+    String? sortOrder = 'desc',
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getContent,
+          [],
+          {
+            #page: page,
+            #limit: limit,
+            #status: status,
+            #type: type,
+            #searchQuery: searchQuery,
+            #userFilter: userFilter,
+            #startDate: startDate,
+            #endDate: endDate,
+            #categories: categories,
+            #sortBy: sortBy,
+            #sortOrder: sortOrder,
+          },
+        ),
+        returnValue: _i6.Future<_i2.ContentListResponse>.value(
+            _FakeContentListResponse_1(
+          this,
+          Invocation.method(
+            #getContent,
+            [],
+            {
+              #page: page,
+              #limit: limit,
+              #status: status,
+              #type: type,
+              #searchQuery: searchQuery,
+              #userFilter: userFilter,
+              #startDate: startDate,
+              #endDate: endDate,
+              #categories: categories,
+              #sortBy: sortBy,
+              #sortOrder: sortOrder,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i2.ContentListResponse>);
+
+  @override
   _i6.Future<_i2.ContentListResponse> getContentList({
     int? page = 1,
     int? limit = 20,

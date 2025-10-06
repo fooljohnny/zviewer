@@ -86,7 +86,7 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
         final availableImages = provider.content
             .where((content) => 
                 content.isImage && 
-                !widget.album.imageIds.contains(content.id))
+                !(widget.album.imageIds?.contains(content.id) ?? false))
             .toList();
 
         return Column(
@@ -116,9 +116,13 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
                     onTap: () {
                       setState(() {
                         if (isSelected) {
-                          _selectedImageIds.remove(image.id);
+                          if (image.id != null) {
+                            _selectedImageIds.remove(image.id!);
+                          }
                         } else {
-                          _selectedImageIds.add(image.id);
+                          if (image.id != null) {
+                            _selectedImageIds.add(image.id!);
+                          }
                         }
                       });
                     },
@@ -145,7 +149,7 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
-          onPressed: widget.album.imageIds.isEmpty || _isLoading
+          onPressed: (widget.album.imageIds?.isEmpty ?? true) || _isLoading
               ? null
               : () => _removeAllImages(context),
           icon: const Icon(Icons.clear_all),
@@ -168,12 +172,12 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Album Images (${widget.album.imageIds.length})',
+          'Album Images (${widget.album.imageIds?.length ?? 0})',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: widget.album.images.isEmpty
+          child: (widget.album.images?.isEmpty ?? true)
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -191,16 +195,16 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                   ),
-                  itemCount: widget.album.images.length,
+                  itemCount: widget.album.images?.length ?? 0,
                   itemBuilder: (context, index) {
-                    final image = widget.album.images[index];
+                    final image = widget.album.images![index];
                     final isCover = widget.album.coverImageId == image.id;
                     
                     return _AlbumImageThumbnail(
                       image: image,
                       isCover: isCover,
-                      onRemove: () => _removeImage(context, image.id),
-                      onSetCover: () => _setCoverImage(context, image.id),
+                      onRemove: () => image.id != null ? _removeImage(context, image.id!) : null,
+                      onSetCover: () => image.id != null ? _setCoverImage(context, image.id!) : null,
                     );
                   },
                 ),
@@ -314,7 +318,7 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
     try {
       await context.read<AlbumProvider>().removeImagesFromAlbum(
         widget.album.id,
-        widget.album.imageIds,
+        widget.album.imageIds ?? [],
       );
 
       if (mounted) {
@@ -381,7 +385,7 @@ class _AlbumImageManagementDialogState extends State<AlbumImageManagementDialog>
 
     try {
       await Future.wait([
-        context.read<ContentManagementProvider>().loadContent(),
+        context.read<ContentManagementProvider>().loadContent(refresh: true),
         context.read<AlbumProvider>().getAlbum(widget.album.id),
       ]);
     } finally {
@@ -422,7 +426,7 @@ class _ImageThumbnail extends StatelessWidget {
           child: Stack(
             children: [
               Image.network(
-                image.filePath,
+                image.filePath ?? '',
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
@@ -477,7 +481,7 @@ class _AlbumImageThumbnail extends StatelessWidget {
         child: Stack(
           children: [
             Image.network(
-              image.filePath,
+              image.filePath ?? '',
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,

@@ -523,12 +523,12 @@ class AlbumWaterfallItem extends StatelessWidget {
           ),
           
           // 标签
-          if (album.tags.isNotEmpty) ...[
+          if (album.tags?.isNotEmpty ?? false) ...[
             SizedBox(height: isMobile ? 8 : 4),
             Wrap(
               spacing: 4,
               runSpacing: 4,
-              children: album.tags.take(3).map((tag) {
+              children: album.tags!.take(3).map((tag) {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
