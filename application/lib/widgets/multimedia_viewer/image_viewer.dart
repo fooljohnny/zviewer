@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'gesture_handler.dart';
@@ -37,16 +38,21 @@ class _ImageViewerState extends State<ImageViewer> {
     });
 
     try {
-      // Simulate loading time for demonstration
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Check if the asset exists by trying to load it
-      // For demo purposes, we'll simulate a missing image scenario
-      // In a real app, you would check if the file exists first
+      // Check if the file path is valid
+      if (widget.imagePath.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = 'No image path provided';
+        });
+        return;
+      }
+
+      // For now, we'll assume the image can be loaded
+      // In a real implementation, you might want to check if the file exists
       setState(() {
         _isLoading = false;
-        _hasError = true; // Simulate no image available
-        _errorMessage = 'No image available';
+        _hasError = false;
       });
     } catch (e) {
       setState(() {
@@ -129,7 +135,7 @@ class _ImageViewerState extends State<ImageViewer> {
       onNext: widget.onNext,
       child: PhotoView(
         controller: _photoViewController,
-        imageProvider: AssetImage(widget.imagePath),
+        imageProvider: _getImageProvider(),
         minScale: PhotoViewComputedScale.contained,
         maxScale: PhotoViewComputedScale.covered * 2.0,
         enableRotation: true,
@@ -137,7 +143,9 @@ class _ImageViewerState extends State<ImageViewer> {
           color: Colors.black,
         ),
         loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
         ),
         errorBuilder: (context, error, stackTrace) => const Center(
           child: Column(
@@ -154,6 +162,21 @@ class _ImageViewerState extends State<ImageViewer> {
         ),
       ),
     );
+  }
+
+  ImageProvider _getImageProvider() {
+    // Check if the path is a network URL
+    if (widget.imagePath.startsWith('http://') || widget.imagePath.startsWith('https://')) {
+      return NetworkImage(widget.imagePath);
+    }
+    // Check if the path is an asset
+    else if (widget.imagePath.startsWith('assets/')) {
+      return AssetImage(widget.imagePath);
+    }
+    // Otherwise, treat as a file path
+    else {
+      return FileImage(File(widget.imagePath));
+    }
   }
 
   @override

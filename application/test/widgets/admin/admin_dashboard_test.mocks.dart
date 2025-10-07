@@ -1560,6 +1560,16 @@ class MockAlbumProvider extends _i1.Mock implements _i12.AlbumProvider {
       ) as _i7.Future<void>);
 
   @override
+  _i7.Future<void> deleteAlbums(List<String>? albumIds) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteAlbums,
+          [albumIds],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
   _i7.Future<void> addImagesToAlbum(
     String? albumId,
     List<String>? imageIds,
@@ -1746,6 +1756,25 @@ class MockAlbumProvider extends _i1.Mock implements _i12.AlbumProvider {
         returnValue: _i7.Future<void>.value(),
         returnValueForMissingStub: _i7.Future<void>.value(),
       ) as _i7.Future<void>);
+
+  @override
+  void applyAdvancedFilters(Map<String, dynamic>? filters) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #applyAdvancedFilters,
+          [filters],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void clearAdvancedFilters() => super.noSuchMethod(
+        Invocation.method(
+          #clearAdvancedFilters,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 
   @override
   void addListener(_i8.VoidCallback? listener) => super.noSuchMethod(

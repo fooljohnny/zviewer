@@ -126,10 +126,10 @@ class _MainGalleryPageState extends State<MainGalleryPage>
   List<WaterfallItem> _convertToWaterfallItems(List<ContentItem> content) {
     return content.map((item) {
       return WaterfallItem(
-        id: item.id,
-        imageUrl: item.filePath,
-        title: item.title,
-        subtitle: item.description,
+        id: item.id ?? '',
+        imageUrl: item.filePath ?? '',
+        title: item.title ?? '',
+        subtitle: item.description ?? '',
         aspectRatio: _calculateAspectRatio(item),
         onTap: () => _navigateToDetail(item),
         thumbnailPath: item.thumbnailPath,
@@ -137,15 +137,15 @@ class _MainGalleryPageState extends State<MainGalleryPage>
         metadata: {
           'type': item.type.toString().split('.').last,
           'createdAt': item.uploadedAt,
-          'author': item.userName,
+          'author': item.userName ?? '',
         },
       );
     }).toList();
   }
 
   double _calculateAspectRatio(ContentItem item) {
-    final width = item.metadata['width']?.toDouble() ?? 1.0;
-    final height = item.metadata['height']?.toDouble() ?? 1.0;
+    final width = item.metadata?['width']?.toDouble() ?? 1.0;
+    final height = item.metadata?['height']?.toDouble() ?? 1.0;
     return width / height;
   }
 

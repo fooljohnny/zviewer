@@ -31,8 +31,11 @@ func (s *AlbumService) CreateAlbum(req *models.CreateAlbumRequest, userID string
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
+	// For now, use userID as userName (can be enhanced later with user service lookup)
+	userName := userID
+
 	// Create album
-	album := models.NewAlbum(req.Title, req.Description, userID, req.ImageIDs, req.Tags, req.IsPublic)
+	album := models.NewAlbum(req.Title, req.Description, userID, userName, req.ImageIDs, req.Tags, req.IsPublic)
 
 	// Save album to database
 	if err := s.albumRepo.Create(album); err != nil {
@@ -41,20 +44,43 @@ func (s *AlbumService) CreateAlbum(req *models.CreateAlbumRequest, userID string
 
 	// Add images to album
 	for i, imageID := range req.ImageIDs {
-		if err := s.albumRepo.AddImageToAlbum(album.ID, imageID, "", userID, i); err != nil {
+		// For now, we'll use the imageID as the path since we don't have a media service integration
+		// In a real implementation, you would fetch the actual image path from the media service
+		imagePath := fmt.Sprintf("/media/stream/%s", imageID)
+		if err := s.albumRepo.AddImageToAlbum(album.ID, imageID, imagePath, userID, i); err != nil {
 			s.logger.WithError(err).Warn("Failed to add image to album")
 			// Continue with other images
 		}
 	}
 
-	// Set first image as cover if no cover is specified
+	// Set first image as cover if images exist, then populate album images before return
 	if len(req.ImageIDs) > 0 {
-		// Get the first image path (this would need to be fetched from media service)
-		// For now, we'll set it as the cover image ID
+		// Set cover image ID
 		album.CoverImageID = &req.ImageIDs[0]
+
+		// Load album images from DB to populate paths and counts
+		albumImages, err := s.albumRepo.GetAlbumImages(album.ID)
+		if err == nil && len(albumImages) > 0 {
+			firstImage := albumImages[0]
+			album.CoverImagePath = &firstImage.ImagePath
+			if firstImage.ThumbnailPath != nil {
+				album.CoverThumbnailPath = firstImage.ThumbnailPath
+			}
+			// Also set images on the album so clients receive them immediately
+			album.Images = albumImages
+			album.ImageCount = len(albumImages)
+		} else {
+			s.logger.WithError(err).Warn("Failed to get album images for cover setup")
+		}
+
+		// Persist cover fields
 		if err := s.albumRepo.Update(album); err != nil {
 			s.logger.WithError(err).Warn("Failed to set album cover")
 		}
+	} else {
+		// No images
+		album.Images = []models.AlbumImage{}
+		album.ImageCount = 0
 	}
 
 	s.logger.WithFields(logrus.Fields{
@@ -71,6 +97,27 @@ func (s *AlbumService) GetAlbum(id string) (*models.Album, error) {
 	album, err := s.albumRepo.GetByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get album: %w", err)
+	}
+
+	// Set userName (for now, use userID as userName)
+	album.UserName = album.UserID
+
+	// Load album images
+	images, err := s.albumRepo.GetAlbumImages(id)
+	if err != nil {
+		s.logger.WithError(err).Warn("Failed to get album images")
+		// Continue without images rather than failing
+	} else {
+		// Store album images for internal use
+		album.Images = images
+		album.ImageCount = len(images)
+
+		// Debug logging
+		s.logger.WithFields(logrus.Fields{
+			"album_id":    id,
+			"image_count": len(images),
+			"images":      images,
+		}).Info("Loaded album images")
 	}
 
 	return album, nil
@@ -177,7 +224,8 @@ func (s *AlbumService) UpdateAlbum(id string, req *models.UpdateAlbumRequest, us
 
 		// Add new images
 		for i, imageID := range req.ImageIDs {
-			if err := s.albumRepo.AddImageToAlbum(id, imageID, "", userID, i); err != nil {
+			imagePath := fmt.Sprintf("/media/stream/%s", imageID)
+			if err := s.albumRepo.AddImageToAlbum(id, imageID, imagePath, userID, i); err != nil {
 				s.logger.WithError(err).Warn("Failed to add image to album")
 			}
 		}
@@ -238,7 +286,8 @@ func (s *AlbumService) AddImagesToAlbum(albumID string, req *models.AddImageToAl
 
 	// Add images
 	for _, imageID := range req.ImageIDs {
-		if err := s.albumRepo.AddImageToAlbum(albumID, imageID, "", userID, album.ImageCount); err != nil {
+		imagePath := fmt.Sprintf("/media/stream/%s", imageID)
+		if err := s.albumRepo.AddImageToAlbum(albumID, imageID, imagePath, userID, album.ImageCount); err != nil {
 			s.logger.WithError(err).Warn("Failed to add image to album")
 			continue
 		}
@@ -329,7 +378,8 @@ func (s *AlbumService) SetAlbumCover(albumID string, req *models.SetAlbumCoverRe
 	}
 
 	// Set cover
-	album.UpdateCover(req.ImageID, foundImage.ImagePath, *foundImage.ThumbnailPath)
+	// Use the image path as the cover path, and set thumbnail path to nil if not available
+	album.UpdateCover(req.ImageID, foundImage.ImagePath, "")
 
 	if err := s.albumRepo.Update(album); err != nil {
 		return fmt.Errorf("failed to update album: %w", err)
@@ -406,6 +456,8 @@ func (s *AlbumService) validateCreateRequest(req *models.CreateAlbumRequest) err
 func (s *AlbumService) albumsToSlice(albums []*models.Album) []models.Album {
 	result := make([]models.Album, len(albums))
 	for i, album := range albums {
+		// Set userName (for now, use userID as userName)
+		album.UserName = album.UserID
 		result[i] = *album
 	}
 	return result

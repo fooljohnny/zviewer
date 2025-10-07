@@ -16,6 +16,7 @@ class ImageThumbnail extends StatelessWidget {
   final Widget? placeholder;
   final Widget? errorWidget;
   final BorderRadius? borderRadius;
+  final bool skipThumbnail; // 强制跳过缩略图，直接使用原图
 
   const ImageThumbnail({
     super.key,
@@ -29,6 +30,7 @@ class ImageThumbnail extends StatelessWidget {
     this.placeholder,
     this.errorWidget,
     this.borderRadius,
+    this.skipThumbnail = false,
   });
 
   @override
@@ -51,24 +53,55 @@ class ImageThumbnail extends StatelessWidget {
   String? _getImageUrl() {
     String? url;
     
-    // 优先使用缩略图路径
-    if (thumbnailPath != null && thumbnailPath!.isNotEmpty) {
-      // 如果thumbnailPath已经是完整URL，直接使用
-      if (thumbnailPath!.startsWith('http')) {
-        url = thumbnailPath;
-      } else {
-        // 否则构建完整URL
-        url = '${ApiConfig.mediaUrl}/media/thumbnail/$thumbnailPath';
+    // 如果设置了跳过缩略图，直接使用原图
+    if (skipThumbnail) {
+      if (id != null && id!.isNotEmpty) {
+        // 使用ID获取原始图片
+        url = '${ApiConfig.mediaUrl}/media/stream/$id';
+      } else if (filePath != null && filePath!.isNotEmpty) {
+        // 使用文件路径
+        if (filePath!.startsWith('http')) {
+          url = filePath;
+        } else {
+          // 修复文件路径处理 - 如果路径已经包含media/stream，直接使用
+          if (filePath!.startsWith('/media/stream/')) {
+            String cleanPath = filePath!.substring(1); // 移除开头的斜杠
+            url = '${ApiConfig.mediaUrl}/$cleanPath';
+          } else {
+            // 否则按原来的逻辑处理
+            String cleanPath = filePath!.startsWith('/') ? filePath!.substring(1) : filePath!;
+            url = '${ApiConfig.mediaUrl}/media/stream/$cleanPath';
+          }
+        }
       }
-    } else if (id != null && id!.isNotEmpty) {
-      // 使用ID获取原始图片
-      url = '${ApiConfig.mediaUrl}/media/stream/$id';
-    } else if (filePath != null && filePath!.isNotEmpty) {
-      // 最后尝试使用文件路径
-      if (filePath!.startsWith('http')) {
-        url = filePath;
-      } else {
-        url = '${ApiConfig.mediaUrl}/media/stream/$filePath';
+    } else {
+      // 优先使用缩略图路径
+      if (thumbnailPath != null && thumbnailPath!.isNotEmpty) {
+        // 如果thumbnailPath已经是完整URL，直接使用
+        if (thumbnailPath!.startsWith('http')) {
+          url = thumbnailPath;
+        } else {
+          // 否则构建完整URL
+          url = '${ApiConfig.mediaUrl}/media/thumbnail/$thumbnailPath';
+        }
+      } else if (id != null && id!.isNotEmpty) {
+        // 使用ID获取原始图片
+        url = '${ApiConfig.mediaUrl}/media/stream/$id';
+      } else if (filePath != null && filePath!.isNotEmpty) {
+        // 最后尝试使用文件路径
+        if (filePath!.startsWith('http')) {
+          url = filePath;
+        } else {
+          // 修复文件路径处理 - 如果路径已经包含media/stream，直接使用
+          if (filePath!.startsWith('/media/stream/')) {
+            String cleanPath = filePath!.substring(1); // 移除开头的斜杠
+            url = '${ApiConfig.mediaUrl}/$cleanPath';
+          } else {
+            // 否则按原来的逻辑处理
+            String cleanPath = filePath!.startsWith('/') ? filePath!.substring(1) : filePath!;
+            url = '${ApiConfig.mediaUrl}/media/stream/$cleanPath';
+          }
+        }
       }
     }
     
@@ -79,6 +112,7 @@ class ImageThumbnail extends StatelessWidget {
       print('  - id: $id');
       print('  - filePath: $filePath');
       print('  - mimeType: $mimeType');
+      print('  - ApiConfig.mediaUrl: ${ApiConfig.mediaUrl}');
     }
     
     return url;
@@ -116,15 +150,17 @@ class ImageThumbnail extends StatelessWidget {
   }
 
   Widget _buildCachedImageWidget(String imageUrl) {
-    // 计算有效的缓存尺寸，避免Infinity或NaN
+    // 为了获得最高清晰度，不限制内存缓存尺寸
+    // 让图片以原始分辨率加载和显示
     int? memCacheWidth;
     int? memCacheHeight;
     
-    if (width.isFinite && width > 0) {
-      memCacheWidth = (width * 2).round();
+    // 只有在图片尺寸非常大时才限制内存缓存，避免内存溢出
+    if (width.isFinite && width > 0 && width < 2000) {
+      memCacheWidth = (width * 3).round(); // 增加缓存倍数
     }
-    if (height.isFinite && height > 0) {
-      memCacheHeight = (height * 2).round();
+    if (height.isFinite && height > 0 && height < 2000) {
+      memCacheHeight = (height * 3).round(); // 增加缓存倍数
     }
     
     return Container(
@@ -132,14 +168,12 @@ class ImageThumbnail extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
-        color: Colors.grey[200],
+        color: Colors.black, // 改为黑色背景
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
         child: CachedNetworkImage(
           imageUrl: imageUrl,
-          width: width,
-          height: height,
           fit: fit,
           placeholder: (context, url) {
             if (ApiConfig.isDevelopment) {
@@ -226,7 +260,15 @@ class ImageThumbnail extends StatelessWidget {
         if (filePath!.startsWith('http')) {
           return filePath;
         } else {
-          return '${ApiConfig.mediaUrl}/media/stream/$filePath';
+          // 修复文件路径处理 - 如果路径已经包含media/stream，直接使用
+          if (filePath!.startsWith('/media/stream/')) {
+            String cleanPath = filePath!.substring(1); // 移除开头的斜杠
+            return '${ApiConfig.mediaUrl}/$cleanPath';
+          } else {
+            // 否则按原来的逻辑处理
+            String cleanPath = filePath!.startsWith('/') ? filePath!.substring(1) : filePath!;
+            return '${ApiConfig.mediaUrl}/media/stream/$cleanPath';
+          }
         }
       }
     }

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/comment_provider.dart';
+import 'providers/favorite_provider.dart';
+import 'providers/search_provider.dart';
 import 'providers/payment_provider.dart';
 import 'providers/content_management_provider.dart';
 import 'providers/album_provider.dart';
@@ -51,6 +53,8 @@ class ZViewerApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => CommentProvider()),
+        ChangeNotifierProvider(create: (context) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (context) => SearchProvider()),
         ChangeNotifierProvider(create: (context) => PaymentProvider()),
         ChangeNotifierProvider(create: (context) => DanmakuProvider()),
         ChangeNotifierProxyProvider<AuthProvider, ContentManagementProvider>(

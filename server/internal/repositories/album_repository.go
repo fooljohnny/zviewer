@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"zviewer-server/internal/models"
+	"zviewer-server/pkg/image"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -104,6 +108,9 @@ func (r *AlbumRepository) GetByID(id string) (*models.Album, error) {
 
 	// Get image count
 	album.ImageCount = r.getImageCount(album.ID)
+
+	// Set userName (for now, use userID as userName)
+	album.UserName = album.UserID
 
 	// Get images if needed
 	if album.ImageCount > 0 {
@@ -312,17 +319,291 @@ func (r *AlbumRepository) GetAlbumImages(albumID string) ([]models.AlbumImage, e
 
 // AddImageToAlbum adds an image to an album
 func (r *AlbumRepository) AddImageToAlbum(albumID, imageID, imagePath, addedBy string, sortOrder int) error {
-	query := `
-		INSERT INTO album_images (id, album_id, image_id, image_path, sort_order, added_by, added_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	// Resolve the actual file path for dimension extraction
+	// imagePath is like "/media/stream/{imageID}" but actual file is in services/media/uploads/media/...
+	actualFilePath := r.resolveImageFilePath(imageID)
 
-	_, err := r.db.Exec(query, uuid.New().String(), albumID, imageID, imagePath, sortOrder, addedBy, time.Now())
+	// Get image dimensions
+	// First check if file exists
+	fileInfo, fileExistsErr := os.Stat(actualFilePath)
+	fileExists := fileExistsErr == nil
+	fileSize := int64(0)
+	if fileExists {
+		fileSize = fileInfo.Size()
+	}
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":        imageID,
+		"actualFilePath": actualFilePath,
+		"fileExists":     fileExists,
+		"fileSize":       fileSize,
+		"fileError":      fileExistsErr,
+	}).Debug("Attempting to get image dimensions")
+
+	var width, height int
+	var err error
+
+	if !fileExists {
+		r.logger.WithError(fileExistsErr).WithFields(logrus.Fields{
+			"imageID":        imageID,
+			"actualFilePath": actualFilePath,
+			"errorType":      "FILE_NOT_FOUND",
+		}).Error("Image file not found, cannot extract dimensions")
+		// Use reasonable default values
+		width, height = 1920, 1080
+	} else {
+		// File exists, try to get dimensions
+		width, height, err = image.GetImageDimensions(actualFilePath)
+		if err != nil {
+			r.logger.WithError(err).WithFields(logrus.Fields{
+				"imageID":        imageID,
+				"actualFilePath": actualFilePath,
+				"fileSize":       fileSize,
+				"errorType":      "DIMENSION_EXTRACTION_FAILED",
+			}).Error("Failed to extract image dimensions from existing file, using default values")
+			// Use reasonable default values that won't cause aspect ratio issues
+			width, height = 1920, 1080
+		} else {
+			r.logger.WithFields(logrus.Fields{
+				"imageID":        imageID,
+				"actualFilePath": actualFilePath,
+				"width":          width,
+				"height":         height,
+				"aspectRatio":    float64(width) / float64(height),
+				"fileSize":       fileSize,
+			}).Info("Successfully extracted image dimensions")
+		}
+	}
+
+	query := `
+		INSERT INTO album_images (id, album_id, image_id, image_path, width, height, sort_order, added_by, added_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
+	_, err = r.db.Exec(query, uuid.New().String(), albumID, imageID, imagePath, width, height, sortOrder, addedBy, time.Now())
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to add image to album")
 		return fmt.Errorf("failed to add image to album: %w", err)
 	}
 
+	r.logger.WithFields(logrus.Fields{
+		"albumID":   albumID,
+		"imageID":   imageID,
+		"imagePath": imagePath,
+		"width":     width,
+		"height":    height,
+	}).Info("Successfully added image to album with dimensions")
+
 	return nil
+}
+
+// resolveImageFilePath resolves the actual file path for an image ID
+func (r *AlbumRepository) resolveImageFilePath(imageID string) string {
+	// The actual file structure is: services/media/uploads/media/YYYY/MM/DD/userID/imageID.ext
+	// We need to find the file by searching through the directory structure
+	basePath := "services/media/uploads/media"
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":  imageID,
+		"basePath": basePath,
+	}).Debug("Starting image file path resolution")
+
+	// Get current year, month, day
+	now := time.Now()
+	year := now.Format("2006")
+	month := now.Format("01")
+	day := now.Format("02")
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID": imageID,
+		"year":    year,
+		"month":   month,
+		"day":     day,
+	}).Debug("Generated date components for path resolution")
+
+	// Try current date first
+	possiblePaths := []string{
+		fmt.Sprintf("%s/%s/%s/%s/%s.jpg", basePath, year, month, day, imageID),
+		fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", basePath, year, month, day, imageID),
+		fmt.Sprintf("%s/%s/%s/%s/%s.png", basePath, year, month, day, imageID),
+		fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.jpg", basePath, year, month, imageID),
+		fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.jpeg", basePath, year, month, imageID),
+		fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.png", basePath, year, month, imageID),
+	}
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":      imageID,
+		"currentPaths": possiblePaths,
+		"pathCount":    len(possiblePaths),
+	}).Debug("Generated current date paths")
+
+	// Try previous days (up to 30 days back) - increased from 7 to 30
+	for i := 1; i <= 30; i++ {
+		prevDay := now.AddDate(0, 0, -i)
+		prevYear := prevDay.Format("2006")
+		prevMonth := prevDay.Format("01")
+		prevDayStr := prevDay.Format("02")
+
+		dayPaths := []string{
+			fmt.Sprintf("%s/%s/%s/%s/%s.jpg", basePath, prevYear, prevMonth, prevDayStr, imageID),
+			fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", basePath, prevYear, prevMonth, prevDayStr, imageID),
+			fmt.Sprintf("%s/%s/%s/%s/%s.png", basePath, prevYear, prevMonth, prevDayStr, imageID),
+			fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.jpg", basePath, prevYear, prevMonth, imageID),
+			fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.jpeg", basePath, prevYear, prevMonth, imageID),
+			fmt.Sprintf("%s/%s/%s/00000000-0000-0000-0000-000000000000/%s.png", basePath, prevYear, prevMonth, imageID),
+		}
+		possiblePaths = append(possiblePaths, dayPaths...)
+
+		// Log every 5 days to avoid too much logging
+		if i%5 == 0 {
+			r.logger.WithFields(logrus.Fields{
+				"imageID":   imageID,
+				"daysBack":  i,
+				"prevYear":  prevYear,
+				"prevMonth": prevMonth,
+				"prevDay":   prevDayStr,
+				"dayPaths":  dayPaths,
+			}).Debug("Generated paths for previous day")
+		}
+	}
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":    imageID,
+		"totalPaths": len(possiblePaths),
+		"searchDays": 30,
+	}).Debug("Generated all possible paths, starting file existence check")
+
+	// Also try searching in all subdirectories recursively as a fallback
+	r.logger.WithFields(logrus.Fields{
+		"imageID":  imageID,
+		"basePath": basePath,
+	}).Debug("Starting recursive search as fallback")
+
+	recursivePaths := r.findImageFileRecursively(basePath, imageID)
+	possiblePaths = append(possiblePaths, recursivePaths...)
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":        imageID,
+		"recursivePaths": recursivePaths,
+		"recursiveCount": len(recursivePaths),
+		"totalPaths":     len(possiblePaths),
+	}).Debug("Completed recursive search")
+
+	// Check if any of the possible paths exist
+	foundPaths := []string{}
+	for i, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			foundPaths = append(foundPaths, path)
+			r.logger.WithFields(logrus.Fields{
+				"imageID":    imageID,
+				"foundPath":  path,
+				"pathIndex":  i,
+				"totalPaths": len(possiblePaths),
+			}).Info("Found image file")
+			return path
+		}
+	}
+
+	// If no file found, return the first possible path (will fail gracefully)
+	r.logger.WithFields(logrus.Fields{
+		"imageID":    imageID,
+		"totalPaths": len(possiblePaths),
+		"foundPaths": foundPaths,
+		"firstPath":  possiblePaths[0],
+		"basePath":   basePath,
+		"basePathExists": func() bool {
+			if _, err := os.Stat(basePath); err == nil {
+				return true
+			}
+			return false
+		}(),
+	}).Warn("Could not find image file in any expected location, using first possible path")
+	return possiblePaths[0]
+}
+
+// findImageFileRecursively searches for an image file recursively in the base directory
+func (r *AlbumRepository) findImageFileRecursively(basePath, imageID string) []string {
+	var paths []string
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":  imageID,
+		"basePath": basePath,
+	}).Debug("Starting recursive file search")
+
+	// Define supported extensions
+	extensions := []string{"jpg", "jpeg", "png", "gif", "webp"}
+
+	// Check if base path exists
+	if _, err := os.Stat(basePath); err != nil {
+		r.logger.WithError(err).WithFields(logrus.Fields{
+			"imageID":  imageID,
+			"basePath": basePath,
+		}).Warn("Base path does not exist for recursive search")
+		return paths
+	}
+
+	// Walk through the directory tree
+	fileCount := 0
+	matchedFiles := 0
+
+	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			r.logger.WithError(err).WithFields(logrus.Fields{
+				"imageID": imageID,
+				"path":    path,
+			}).Debug("Error accessing path during recursive search")
+			return nil // Continue walking even if there's an error
+		}
+
+		// Check if this is a file and matches our image ID
+		if !info.IsDir() {
+			fileCount++
+			fileName := filepath.Base(path)
+			ext := filepath.Ext(fileName)
+			if ext != "" {
+				ext = ext[1:] // Remove the dot
+				nameWithoutExt := strings.TrimSuffix(fileName, "."+ext)
+
+				// Check if the file name (without extension) matches the image ID
+				if nameWithoutExt == imageID {
+					matchedFiles++
+					// Check if the extension is supported
+					for _, supportedExt := range extensions {
+						if ext == supportedExt {
+							paths = append(paths, path)
+							r.logger.WithFields(logrus.Fields{
+								"imageID":   imageID,
+								"foundPath": path,
+								"fileName":  fileName,
+								"extension": ext,
+								"fileSize":  info.Size(),
+							}).Debug("Found matching file during recursive search")
+							break
+						}
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		r.logger.WithError(err).WithFields(logrus.Fields{
+			"imageID":  imageID,
+			"basePath": basePath,
+		}).Error("Error walking directory tree during recursive search")
+	}
+
+	r.logger.WithFields(logrus.Fields{
+		"imageID":      imageID,
+		"basePath":     basePath,
+		"filesScanned": fileCount,
+		"matchedFiles": matchedFiles,
+		"foundPaths":   paths,
+		"pathCount":    len(paths),
+	}).Debug("Completed recursive file search")
+
+	return paths
 }
 
 // RemoveImageFromAlbum removes an image from an album

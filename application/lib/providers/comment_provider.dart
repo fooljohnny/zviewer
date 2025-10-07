@@ -2,187 +2,222 @@ import 'package:flutter/foundation.dart';
 import '../models/comment.dart';
 import '../services/comment_service.dart';
 
-class CommentProvider with ChangeNotifier {
+/// 评论状态管理
+class CommentProvider extends ChangeNotifier {
   final CommentService _commentService;
   
-  // State
-  List<Comment> _comments = [];
-  bool _isLoading = false;
-  String? _error;
-  String? _currentMediaId;
+  // 状态管理
+  final Map<String, List<Comment>> _comments = {};
+  final Map<String, bool> _isLoading = {};
+  final Map<String, String?> _errors = {};
+  final Map<String, bool> _isSubmitting = {};
+  
+  // 当前媒体评论状态（用于多媒体查看器）
+  List<Comment> _currentComments = [];
+  bool _isCurrentLoading = false;
+  String? _currentError;
 
-  CommentProvider({CommentService? commentService})
+  CommentProvider({CommentService? commentService}) 
       : _commentService = commentService ?? CommentService();
 
   // Getters
-  List<Comment> get comments => List.unmodifiable(_comments);
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  String? get currentMediaId => _currentMediaId;
-  bool get hasComments => _comments.isNotEmpty;
+  List<Comment> getComments(String albumId) => _comments[albumId] ?? [];
+  bool isLoading(String albumId) => _isLoading[albumId] ?? false;
+  bool isSubmitting(String albumId) => _isSubmitting[albumId] ?? false;
+  String? getError(String albumId) => _errors[albumId];
+  
+  // 当前媒体评论的getters（用于多媒体查看器）
+  List<Comment> get comments => _currentComments;
+  bool get isCurrentLoading => _isCurrentLoading;
+  String? get currentError => _currentError;
 
-  /// Load comments for a specific media item
-  Future<void> loadComments(String mediaId) async {
-    if (_currentMediaId == mediaId && _comments.isNotEmpty) {
-      return; // Already loaded
-    }
+  /// 加载图集评论
+  Future<void> loadAlbumComments(String albumId) async {
+    if (_isLoading[albumId] == true) return;
 
-    _setLoading(true);
-    _clearError();
-    _currentMediaId = mediaId;
+    _setLoading(albumId, true);
+    _clearError(albumId);
 
     try {
-      final comments = await _commentService.getComments(mediaId);
-      _comments = comments;
+      final comments = await _commentService.getAlbumComments(albumId);
+      _comments[albumId] = comments;
       notifyListeners();
     } catch (e) {
-      // Only show error for actual network/server errors, not auth issues
-      if (e.toString().contains('Authentication required')) {
-        // Clear comments and don't show error for auth issues
-        _comments = [];
-        _clearError();
-      } else {
-        _setError('Failed to load comments: ${e.toString()}');
+      _setError(albumId, '加载评论失败: $e');
+    } finally {
+      _setLoading(albumId, false);
+    }
+  }
+
+  /// 添加评论
+  Future<bool> addComment(String albumId, String content, {String? parentId}) async {
+    _setSubmitting(albumId, true);
+    _clearError(albumId);
+
+    try {
+      final request = CreateCommentRequest(
+        content: content,
+        albumId: albumId,
+        parentId: parentId,
+      );
+
+      final comment = await _commentService.addComment(request);
+      if (comment != null) {
+        _comments[albumId] = _comments[albumId] ?? [];
+        _comments[albumId]!.add(comment);
+        notifyListeners();
+        return true;
       }
-      notifyListeners();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Post a new comment
-  Future<bool> postComment(String content, String mediaId) async {
-    if (content.trim().isEmpty) {
-      _setError('Comment cannot be empty');
       return false;
-    }
-
-    // Validate content
-    final validationError = Comment.validateContent(content);
-    if (validationError != null) {
-      _setError(validationError);
-      return false;
-    }
-
-    _setLoading(true);
-    _clearError();
-
-    try {
-      final newComment = await _commentService.postComment(
-        content: content,
-        mediaId: mediaId,
-      );
-
-      // Add to the beginning of the list (newest first)
-      _comments.insert(0, newComment);
-      notifyListeners();
-      return true;
     } catch (e) {
-      _setError('Failed to post comment: ${e.toString()}');
+      _setError(albumId, '添加评论失败: $e');
       return false;
     } finally {
-      _setLoading(false);
+      _setSubmitting(albumId, false);
     }
   }
 
-  /// Update a comment
-  Future<bool> updateComment(String commentId, String content) async {
-    if (content.trim().isEmpty) {
-      _setError('Comment cannot be empty');
-      return false;
-    }
-
-    // Validate content
-    final validationError = Comment.validateContent(content);
-    if (validationError != null) {
-      _setError(validationError);
-      return false;
-    }
-
-    _setLoading(true);
-    _clearError();
-
+  /// 删除评论
+  Future<bool> deleteComment(String albumId, String commentId) async {
     try {
-      final updatedComment = await _commentService.updateComment(
-        commentId: commentId,
-        content: content,
-      );
-
-      // Find and replace the comment
-      final index = _comments.indexWhere((c) => c.id == commentId);
-      if (index != -1) {
-        _comments[index] = updatedComment;
+      final success = await _commentService.deleteComment(commentId);
+      if (success) {
+        _comments[albumId]?.removeWhere((comment) => comment.id == commentId);
         notifyListeners();
       }
-      return true;
+      return success;
     } catch (e) {
-      _setError('Failed to update comment: ${e.toString()}');
+      _setError(albumId, '删除评论失败: $e');
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
-  /// Delete a comment
-  Future<bool> deleteComment(String commentId) async {
-    _setLoading(true);
-    _clearError();
+  /// 点赞评论
+  Future<bool> likeComment(String albumId, String commentId) async {
+    try {
+      final success = await _commentService.likeComment(commentId);
+      if (success) {
+        final commentIndex = _comments[albumId]?.indexWhere((c) => c.id == commentId);
+        if (commentIndex != null && commentIndex >= 0) {
+          final comment = _comments[albumId]![commentIndex];
+          _comments[albumId]![commentIndex] = comment.copyWith(
+            likeCount: comment.isLiked ? comment.likeCount - 1 : comment.likeCount + 1,
+            isLiked: !comment.isLiked,
+          );
+          notifyListeners();
+        }
+      }
+      return success;
+    } catch (e) {
+      _setError(albumId, '点赞失败: $e');
+      return false;
+    }
+  }
+
+  /// 取消点赞评论
+  Future<bool> unlikeComment(String albumId, String commentId) async {
+    try {
+      final success = await _commentService.unlikeComment(commentId);
+      if (success) {
+        final commentIndex = _comments[albumId]?.indexWhere((c) => c.id == commentId);
+        if (commentIndex != null && commentIndex >= 0) {
+          final comment = _comments[albumId]![commentIndex];
+          _comments[albumId]![commentIndex] = comment.copyWith(
+            likeCount: comment.isLiked ? comment.likeCount - 1 : comment.likeCount + 1,
+            isLiked: !comment.isLiked,
+          );
+          notifyListeners();
+        }
+      }
+      return success;
+    } catch (e) {
+      _setError(albumId, '取消点赞失败: $e');
+      return false;
+    }
+  }
+
+  /// 清除错误
+  void clearError(String albumId) {
+    _clearError(albumId);
+    notifyListeners();
+  }
+
+  /// 刷新评论
+  Future<void> refreshComments(String albumId) async {
+    _comments.remove(albumId);
+    await loadAlbumComments(albumId);
+  }
+
+  // 私有方法
+  void _setLoading(String albumId, bool loading) {
+    _isLoading[albumId] = loading;
+    notifyListeners();
+  }
+
+  void _setSubmitting(String albumId, bool submitting) {
+    _isSubmitting[albumId] = submitting;
+    notifyListeners();
+  }
+
+  void _setError(String albumId, String error) {
+    _errors[albumId] = error;
+    notifyListeners();
+  }
+
+  void _clearError(String albumId) {
+    _errors.remove(albumId);
+  }
+
+  /// 加载评论（用于多媒体查看器）
+  Future<void> loadComments(String mediaId) async {
+    _isCurrentLoading = true;
+    _currentError = null;
+    notifyListeners();
 
     try {
-      await _commentService.deleteComment(commentId);
+      // 这里应该调用相应的API来获取媒体评论
+      // 暂时使用空列表，实际实现需要根据API调整
+      _currentComments = [];
+      notifyListeners();
+    } catch (e) {
+      _currentError = '加载评论失败: $e';
+      notifyListeners();
+    } finally {
+      _isCurrentLoading = false;
+      notifyListeners();
+    }
+  }
 
-      // Remove from the list
-      _comments.removeWhere((c) => c.id == commentId);
+  /// 发布评论（用于多媒体查看器）
+  Future<bool> postComment(String content, {String? parentId}) async {
+    _isCurrentLoading = true;
+    _currentError = null;
+    notifyListeners();
+
+    try {
+      // 这里应该调用相应的API来发布评论
+      // 暂时返回成功，实际实现需要根据API调整
+      await Future.delayed(const Duration(seconds: 1)); // 模拟网络请求
       notifyListeners();
       return true;
     } catch (e) {
-      _setError('Failed to delete comment: ${e.toString()}');
+      _currentError = '发布评论失败: $e';
+      notifyListeners();
       return false;
     } finally {
-      _setLoading(false);
+      _isCurrentLoading = false;
+      notifyListeners();
     }
   }
 
-  /// Refresh comments for current media
-  Future<void> refreshComments() async {
-    if (_currentMediaId != null) {
-      await loadComments(_currentMediaId!);
-    }
+  /// 刷新评论（用于多媒体查看器）
+  Future<void> refreshCurrentComments() async {
+    await loadComments('');
   }
 
-  /// Clear comments and reset state
-  void clearComments() {
-    _comments.clear();
-    _currentMediaId = null;
-    _clearError();
+  /// 清除错误（用于多媒体查看器）
+  void clearCurrentError() {
+    _currentError = null;
     notifyListeners();
-  }
-
-  /// Clear error state
-  void clearError() {
-    _clearError();
-    notifyListeners();
-  }
-
-  // Private methods
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
-
-  void _setError(String error) {
-    _error = error;
-    notifyListeners();
-  }
-
-  void _clearError() {
-    _error = null;
-  }
-
-  @override
-  void dispose() {
-    _commentService.dispose();
-    super.dispose();
   }
 }
-

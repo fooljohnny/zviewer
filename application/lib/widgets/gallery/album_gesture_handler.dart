@@ -80,7 +80,7 @@ class _AlbumGestureHandlerState extends State<AlbumGestureHandler>
             ),
             child: Opacity(
               opacity: _isDragging 
-                  ? (1.0 - (_dragDistance / MediaQuery.of(context).size.width).clamp(0.0, 1.0))
+                  ? (1.0 - (_dragDistance.abs() / MediaQuery.of(context).size.width).clamp(0.0, 1.0))
                   : _opacityAnimation.value,
               child: widget.child,
             ),
@@ -98,13 +98,11 @@ class _AlbumGestureHandlerState extends State<AlbumGestureHandler>
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
 
-    // 只处理向右的滑动
-    if (details.delta.dx > 0) {
-      setState(() {
-        _dragDistance += details.delta.dx;
-        _dragDistance = _dragDistance.clamp(0.0, MediaQuery.of(context).size.width);
-      });
-    }
+    // 处理左右滑动
+    setState(() {
+      _dragDistance += details.delta.dx;
+      _dragDistance = _dragDistance.clamp(-MediaQuery.of(context).size.width, MediaQuery.of(context).size.width);
+    });
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -114,17 +112,17 @@ class _AlbumGestureHandlerState extends State<AlbumGestureHandler>
 
     // 检查是否满足返回条件
     final screenWidth = MediaQuery.of(context).size.width;
-    final dragPercentage = _dragDistance / screenWidth;
-    final velocity = details.velocity.pixelsPerSecond.dx;
+    final dragPercentage = _dragDistance.abs() / screenWidth;
+    final velocity = details.velocity.pixelsPerSecond.dx.abs();
 
     bool shouldReturn = false;
 
-    // 条件1：拖拽距离超过阈值
+    // 条件1：拖拽距离超过阈值（左右都可以）
     if (dragPercentage > (widget.swipeThreshold / screenWidth)) {
       shouldReturn = true;
     }
 
-    // 条件2：拖拽速度超过阈值
+    // 条件2：拖拽速度超过阈值（左右都可以）
     if (velocity > widget.swipeVelocityThreshold) {
       shouldReturn = true;
     }

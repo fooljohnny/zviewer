@@ -26,6 +26,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
   bool _isPublic = true;
   bool _isLoading = false;
   final Set<String> _selectedImageIds = <String>{};
+  String? _selectedCoverImageId;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
       _tagsController.text = widget.album!.tags?.join(', ') ?? '';
       _selectedStatus = widget.album!.status;
       _isPublic = widget.album!.isPublic;
+      _selectedCoverImageId = widget.album!.coverImageId;
     } else {
       // Load available images for new album
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -133,9 +135,11 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
                   ),
                 ],
                 onChanged: (value) {
-                  setState(() {
-                    _selectedStatus = value!;
-                  });
+                  if (value != null) {
+                    setState(() {
+                      _selectedStatus = value;
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 16),
@@ -164,6 +168,36 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
                 const SizedBox(height: 8),
                 Text('已选择: ${_selectedImageIds.length} 张图片'),
                 const SizedBox(height: 8),
+                // 封面选择
+                if (_selectedImageIds.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.blue, size: 16),
+                      const SizedBox(width: 4),
+                      const Text('选择封面图片:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      if (_selectedCoverImageId != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          ),
+                          child: const Text(
+                            '已选择封面',
+                            style: TextStyle(color: Colors.blue, fontSize: 10),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 80,
+                    child: _buildCoverSelection(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 SizedBox(
                   height: 150, // 减少高度
                   child: _buildImageSelection(),
@@ -293,6 +327,7 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
           imageIds: _selectedImageIds.toList(),
           tags: tags,
           isPublic: _isPublic,
+          coverImageId: _selectedCoverImageId,
         );
 
         await context.read<AlbumProvider>().createAlbum(request);
@@ -330,6 +365,122 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
 
   void _loadAvailableImages() {
     context.read<ContentManagementProvider>().loadContent(refresh: true);
+  }
+
+  Widget _buildCoverSelection() {
+    return Consumer<ContentManagementProvider>(
+      builder: (context, provider, child) {
+        final selectedImages = provider.content.where((item) => 
+          _selectedImageIds.contains(item.id) && 
+          (item.mimeType?.startsWith('image/') == true || item.type == ContentType.image)
+        ).toList();
+
+        if (selectedImages.isEmpty) {
+          return Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.photo_library_outlined, color: Colors.grey, size: 24),
+                  SizedBox(height: 4),
+                  Text('请先选择图片', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: selectedImages.length,
+            itemBuilder: (context, index) {
+              final image = selectedImages[index];
+              final isSelected = _selectedCoverImageId == image.id;
+              
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCoverImageId = image.id;
+                  });
+                },
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected ? Colors.blue : Colors.grey[300]!,
+                      width: isSelected ? 3 : 1,
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ] : null,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Stack(
+                      children: [
+                        ImageThumbnail(
+                          id: image.id,
+                          filePath: image.filePath,
+                          skipThumbnail: true,
+                          mimeType: image.mimeType,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          errorWidget: const Icon(Icons.broken_image, size: 32),
+                        ),
+                        if (isSelected)
+                          Container(
+                            color: Colors.blue.withOpacity(0.2),
+                            child: const Center(
+                              child: Icon(
+                                Icons.star,
+                                color: Colors.blue,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        // 添加封面标识
+                        if (isSelected)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.star,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildImageSelection() {
@@ -425,8 +576,8 @@ class _AlbumFormDialogState extends State<AlbumFormDialog> {
                     children: [
                       ImageThumbnail(
                         id: image.id,
-                        thumbnailPath: image.thumbnailPath,
                         filePath: image.filePath,
+                        skipThumbnail: true,
                         mimeType: image.mimeType,
                         width: double.infinity,
                         height: double.infinity,

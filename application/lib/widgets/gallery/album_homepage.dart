@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../common/modern_background.dart';
 import '../common/zviewer_logo.dart';
 import 'album_waterfall_grid.dart';
-import 'album_detail_page.dart';
+import 'album_browsing_page.dart';
 import '../../providers/album_provider.dart';
 import '../../models/album.dart';
 
@@ -19,17 +19,21 @@ class AlbumHomepage extends StatefulWidget {
 class _AlbumHomepageState extends State<AlbumHomepage>
     with TickerProviderStateMixin {
   late AnimationController _backgroundAnimationController;
+  late ScrollController _scrollController;
+  double _savedScrollPosition = 0.0;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
+    _setupScrollController();
     _loadInitialData();
   }
 
   @override
   void dispose() {
     _backgroundAnimationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -42,9 +46,14 @@ class _AlbumHomepageState extends State<AlbumHomepage>
     _backgroundAnimationController.repeat();
   }
 
+  void _setupScrollController() {
+    _scrollController = ScrollController();
+  }
+
   void _loadInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AlbumProvider>().loadPublicAlbums(refresh: true);
+      // 加载用户自己的图集，而不是公开图集
+      context.read<AlbumProvider>().loadAlbums(refresh: true);
     });
   }
 
@@ -73,9 +82,9 @@ class _AlbumHomepageState extends State<AlbumHomepage>
 
         return AlbumWaterfallGrid(
           albums: albumProvider.albums,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           onLoadMore: () {
             albumProvider.loadMoreAlbums();
           },
@@ -85,6 +94,7 @@ class _AlbumHomepageState extends State<AlbumHomepage>
           desktopCardMinWidth: 300,
           desktopCardMaxWidth: 400,
           onAlbumTap: (album) => _navigateToAlbumDetail(album),
+          scrollController: _scrollController,
         );
       },
     );
@@ -147,11 +157,25 @@ class _AlbumHomepageState extends State<AlbumHomepage>
   }
 
   void _navigateToAlbumDetail(Album album) {
-    // 导航到图集详情页
+    // 保存当前滚动位置
+    _savedScrollPosition = _scrollController.offset;
+    
+    // 导航到图集浏览页面
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => AlbumDetailPage(album: album),
+        builder: (context) => AlbumBrowsingPage(album: album),
       ),
-    );
+    ).then((_) {
+      // 返回时恢复滚动位置
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _savedScrollPosition,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    });
   }
 }

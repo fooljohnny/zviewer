@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/album_provider.dart';
 import '../../models/album.dart';
 import '../../models/content_item.dart';
+import '../../config/api_config.dart';
+import '../common/image_thumbnail.dart';
 import 'album_form.dart';
 import 'album_image_management.dart';
 
@@ -30,6 +32,14 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
     return Consumer<AlbumProvider>(
       builder: (context, provider, child) {
         final album = provider.currentAlbum ?? widget.album;
+        
+        // 调试信息
+        print('🔍 AlbumDetailsView - Album ID: ${album.id}');
+        print('🔍 AlbumDetailsView - Image Count: ${album.imageCount}');
+        print('🔍 AlbumDetailsView - Images: ${album.images?.length ?? 0}');
+        if (album.images != null && album.images!.isNotEmpty) {
+          print('🔍 AlbumDetailsView - First Image: ${album.images!.first.toJson()}');
+        }
         
         return Scaffold(
           appBar: AppBar(
@@ -87,12 +97,16 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
               child: album.hasCover
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        album.coverImageUrl!,
+                      child: ImageThumbnail(
+                        id: album.coverImageId,
+                        filePath: album.coverImagePath,
+                        mimeType: 'image/jpeg',
+                        width: double.infinity,
+                        height: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.photo_album, size: 48);
-                        },
+                        borderRadius: BorderRadius.zero,
+                        skipThumbnail: true, // 强制跳过缩略图，直接使用原图
+                        errorWidget: const Icon(Icons.photo_album, size: 48),
                       ),
                     )
                   : const Icon(Icons.photo_album, size: 48),
@@ -121,20 +135,15 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
                     children: [
-                      _InfoItem(
-                        icon: Icons.person,
-                        label: 'Created by',
-                        value: album.userName,
-                      ),
-                      const SizedBox(width: 24),
                       _InfoItem(
                         icon: Icons.photo,
                         label: 'Images',
                         value: album.imageCountDisplayText,
                       ),
-                      const SizedBox(width: 24),
                       _InfoItem(
                         icon: Icons.visibility,
                         label: 'Views',
@@ -200,13 +209,14 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Images (${album.imageCount})',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -215,20 +225,11 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Add Images'),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AlbumImageManagementDialog(album: album),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.manage_search),
-                  label: const Text('Manage'),
+                  icon: const Icon(Icons.manage_search, size: 18),
+                  label: const Text('Manage Images'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
                 ),
               ],
             ),
@@ -260,11 +261,12 @@ class _AlbumDetailsViewState extends State<AlbumDetailsView> {
                 ),
                 itemCount: album.images?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final image = album.images![index];
+                  final image = album.images?[index];
+                  if (image == null) return const SizedBox.shrink();
                   return _ImageThumbnail(
                     image: image,
-                    isCover: album.coverImageId == image.id,
-                    onSetCover: () => image.id != null ? _setCoverImage(context, album, image.id!) : null,
+                    isCover: album.coverImageId == image.imageId,
+                    onSetCover: () => image.imageId != null ? _setCoverImage(context, album, image.imageId!) : null,
                   );
                 },
               ),
@@ -466,7 +468,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _ImageThumbnail extends StatelessWidget {
-  final ContentItem image;
+  final AlbumImage image;
   final bool isCover;
   final VoidCallback onSetCover;
 
@@ -480,22 +482,30 @@ class _ImageThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.grey[300],
-            border: isCover
-                ? Border.all(color: Colors.blue, width: 2)
-                : null,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              image.filePath ?? '',
+        SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[300],
+              border: isCover
+                  ? Border.all(color: Colors.blue, width: 2)
+                  : null,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+            child: ImageThumbnail(
+              id: image.imageId,
+              filePath: image.imagePath,
+              mimeType: image.mimeType,
+              width: double.infinity,
+              height: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.broken_image, size: 32);
-              },
+              borderRadius: BorderRadius.zero,
+              skipThumbnail: true, // 强制跳过缩略图，直接使用原图
+              errorWidget: const Icon(Icons.broken_image, size: 32),
+            ),
             ),
           ),
         ),
@@ -542,4 +552,5 @@ class _ImageThumbnail extends StatelessWidget {
       ],
     );
   }
+
 }

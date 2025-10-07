@@ -946,8 +946,8 @@ class _AdminResourceManagementState extends State<AdminResourceManagement> {
                     ),
                     child: ImageThumbnail(
                       id: media.id,
-                      thumbnailPath: media.thumbnailPath,
                       filePath: media.filePath,
+                      skipThumbnail: true,
                       mimeType: media.mimeType,
                       width: double.infinity,
                       height: double.infinity,

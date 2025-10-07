@@ -1,182 +1,142 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 import '../models/comment.dart';
-import '../config/api_config.dart';
+import 'auth_service.dart';
 
+/// 评论服务
 class CommentService {
-  static String get _baseUrl => ApiConfig.commentsUrl;
-  
-  final http.Client _client;
-  final String? _authToken;
+  final AuthService _authService = AuthService();
 
-  CommentService({
-    http.Client? client,
-    String? authToken,
-  }) : _client = client ?? http.Client(),
-       _authToken = authToken;
-
-  /// Post a new comment
-  Future<Comment> postComment({
-    required String content,
-    required String mediaId,
-  }) async {
-    if (_authToken == null) {
-      throw const CommentException('Authentication required to post comments');
-    }
-
+  /// 获取图集的评论列表
+  Future<List<Comment>> getAlbumComments(String albumId) async {
     try {
-      final response = await _client.post(
-        Uri.parse('$_baseUrl/comments'),
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('用户未登录');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConfig.commentsUrl}/album/$albumId'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_authToken',
+          'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'content': content.trim(),
-          'mediaId': mediaId,
-        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['comments'] != null) {
+          return (data['comments'] as List)
+              .map((comment) => Comment.fromJson(comment))
+              .toList();
+        }
+      }
+      
+      throw Exception('获取评论失败: ${response.statusCode}');
+    } catch (e) {
+      print('Error getting album comments: $e');
+      rethrow;
+    }
+  }
+
+  /// 添加评论
+  Future<Comment?> addComment(CreateCommentRequest request) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('用户未登录');
+      }
+
+      final response = await http.post(
+        Uri.parse(AppConfig.commentsUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(request.toJson()),
       );
 
       if (response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return Comment.fromJson(data);
-      } else if (response.statusCode == 401) {
-        throw const CommentException('Authentication failed');
-      } else if (response.statusCode == 400) {
-        final error = jsonDecode(response.body) as Map<String, dynamic>;
-        throw CommentException(error['message'] ?? 'Invalid comment data');
-      } else {
-        throw CommentException('Failed to post comment: ${response.statusCode}');
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['comment'] != null) {
+          return Comment.fromJson(data['comment']);
+        }
       }
+      
+      throw Exception('添加评论失败: ${response.statusCode}');
     } catch (e) {
-      if (e is CommentException) rethrow;
-      throw CommentException('Network error: ${e.toString()}');
+      print('Error adding comment: $e');
+      rethrow;
     }
   }
 
-  /// Get comments for a specific media item
-  Future<List<Comment>> getComments(String mediaId) async {
-    if (_authToken == null) {
-      // Return empty list instead of throwing exception for better UX
-      return [];
-    }
-
+  /// 删除评论
+  Future<bool> deleteComment(String commentId) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$_baseUrl/comments/$mediaId'),
-        headers: {
-          'Authorization': 'Bearer $_authToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final commentsList = data['comments'] as List<dynamic>;
-        return commentsList
-            .map((json) => Comment.fromJson(json as Map<String, dynamic>))
-            .toList();
-      } else if (response.statusCode == 401) {
-        throw const CommentException('Authentication failed');
-      } else if (response.statusCode == 404) {
-        return []; // No comments found
-      } else {
-        throw CommentException('Failed to fetch comments: ${response.statusCode}');
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('用户未登录');
       }
-    } catch (e) {
-      if (e is CommentException) rethrow;
-      throw CommentException('Network error: ${e.toString()}');
-    }
-  }
 
-  /// Update a comment
-  Future<Comment> updateComment({
-    required String commentId,
-    required String content,
-  }) async {
-    if (_authToken == null) {
-      throw const CommentException('Authentication required to update comments');
-    }
-
-    try {
-      final response = await _client.put(
-        Uri.parse('$_baseUrl/comments/$commentId'),
+      final response = await http.delete(
+        Uri.parse('${AppConfig.commentsUrl}/$commentId'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_authToken',
+          'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'content': content.trim(),
-        }),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return Comment.fromJson(data);
-      } else if (response.statusCode == 401) {
-        throw const CommentException('Authentication failed');
-      } else if (response.statusCode == 403) {
-        throw const CommentException('Not authorized to update this comment');
-      } else if (response.statusCode == 404) {
-        throw const CommentException('Comment not found');
-      } else if (response.statusCode == 400) {
-        final error = jsonDecode(response.body) as Map<String, dynamic>;
-        throw CommentException(error['message'] ?? 'Invalid comment data');
-      } else {
-        throw CommentException('Failed to update comment: ${response.statusCode}');
-      }
+      return response.statusCode == 200;
     } catch (e) {
-      if (e is CommentException) rethrow;
-      throw CommentException('Network error: ${e.toString()}');
+      print('Error deleting comment: $e');
+      return false;
     }
   }
 
-  /// Delete a comment
-  Future<void> deleteComment(String commentId) async {
-    if (_authToken == null) {
-      throw const CommentException('Authentication required to delete comments');
-    }
-
+  /// 点赞评论
+  Future<bool> likeComment(String commentId) async {
     try {
-      final response = await _client.delete(
-        Uri.parse('$_baseUrl/comments/$commentId'),
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('用户未登录');
+      }
+
+      final response = await http.post(
+        Uri.parse('${AppConfig.commentsUrl}/$commentId/like'),
         headers: {
-          'Authorization': 'Bearer $_authToken',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
-      if (response.statusCode == 204) {
-        return; // Success
-      } else if (response.statusCode == 401) {
-        throw const CommentException('Authentication failed');
-      } else if (response.statusCode == 403) {
-        throw const CommentException('Not authorized to delete this comment');
-      } else if (response.statusCode == 404) {
-        throw const CommentException('Comment not found');
-      } else {
-        throw CommentException('Failed to delete comment: ${response.statusCode}');
-      }
+      return response.statusCode == 200;
     } catch (e) {
-      if (e is CommentException) rethrow;
-      throw CommentException('Network error: ${e.toString()}');
+      print('Error liking comment: $e');
+      return false;
     }
   }
 
-  /// Update authentication token
-  void updateAuthToken(String? token) {
-    // This would be used to update the token when user logs in/out
-    // For now, we'll create a new instance with the updated token
-  }
+  /// 取消点赞评论
+  Future<bool> unlikeComment(String commentId) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('用户未登录');
+      }
 
-  void dispose() {
-    _client.close();
-  }
-}
+      final response = await http.delete(
+        Uri.parse('${AppConfig.commentsUrl}/$commentId/like'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
-class CommentException implements Exception {
-  final String message;
-  
-  const CommentException(this.message);
-  
-  @override
-  String toString() => 'CommentException: $message';
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error unliking comment: $e');
+      return false;
+    }
+  }
 }

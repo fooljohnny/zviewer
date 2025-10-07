@@ -282,9 +282,9 @@ class WaterfallItemWidget extends StatelessWidget {
                       // 使用ImageThumbnail组件显示图片
                       ImageThumbnail(
                         id: item.id,
-                        thumbnailPath: item.thumbnailPath,
                         filePath: item.imageUrl,
                         mimeType: item.mimeType,
+                        skipThumbnail: true,
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.cover,

@@ -20,6 +20,7 @@ class AlbumWaterfallGrid extends StatefulWidget {
   final double desktopCardMinWidth;
   final double desktopCardMaxWidth;
   final Function(Album)? onAlbumTap;
+  final ScrollController? scrollController;
 
   const AlbumWaterfallGrid({
     super.key,
@@ -36,6 +37,7 @@ class AlbumWaterfallGrid extends StatefulWidget {
     this.desktopCardMinWidth = 300.0,
     this.desktopCardMaxWidth = 400.0,
     this.onAlbumTap,
+    this.scrollController,
   });
 
   @override
@@ -49,13 +51,16 @@ class _AlbumWaterfallGridState extends State<AlbumWaterfallGrid> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
+    _scrollController = widget.scrollController ?? ScrollController();
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    // 只释放自己创建的滚动控制器
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 
@@ -241,7 +246,7 @@ class SliverAlbumWaterfallGrid extends StatelessWidget {
             album: album,
             isMobile: false,
             width: itemWidth,
-            height: null, // 桌面端使用原始宽高比
+            height: math.max(itemWidth * album.aspectRatio, 300), // 桌面端设置最小高度300px
             onTap: () => onAlbumTap?.call(album),
           ),
         ),
@@ -302,16 +307,7 @@ class AlbumWaterfallItem extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(isMobile ? 16 : 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 封面图片部分
-              _buildCoverImageSection(),
-              
-              // 图集信息
-              _buildAlbumInfoSection(),
-            ],
-          ),
+          child: _buildCoverImageSection(),
         ),
       ),
     );
@@ -339,9 +335,9 @@ class AlbumWaterfallItem extends StatelessWidget {
           if (album.hasCover)
             ImageThumbnail(
               id: album.coverImageId,
-              thumbnailPath: album.coverThumbnailPath,
               filePath: album.coverImageUrl!,
               mimeType: 'image/jpeg',
+              skipThumbnail: true,
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
@@ -389,33 +385,7 @@ class AlbumWaterfallItem extends StatelessWidget {
             ),
           ),
           
-          // 状态指示器
-          Positioned(
-            top: 8,
-            left: 8,
-            child: _buildStatusIndicator(),
-          ),
           
-          // 移动端底部渐变遮罩
-          if (isMobile)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.7),
-                    ],
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -455,10 +425,11 @@ class AlbumWaterfallItem extends StatelessWidget {
   }
 
   Widget _buildAlbumInfoSection() {
-    return Padding(
+    return Container(
       padding: EdgeInsets.all(isMobile ? 16.0 : 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // 图集标题
           Text(
@@ -468,7 +439,7 @@ class AlbumWaterfallItem extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: isMobile ? Colors.white : Colors.black87,
             ),
-            maxLines: isMobile ? 3 : 2,
+            maxLines: isMobile ? 2 : 2,
             overflow: TextOverflow.ellipsis,
           ),
           
@@ -490,30 +461,30 @@ class AlbumWaterfallItem extends StatelessWidget {
           SizedBox(height: isMobile ? 12 : 8),
           Row(
             children: [
-              // 作者
+              // 浏览数
               Icon(
-                Icons.person,
+                Icons.visibility,
                 size: isMobile ? 16 : 12,
                 color: isMobile ? Colors.white70 : Colors.grey[600],
               ),
               const SizedBox(width: 4),
               Text(
-                album.userName,
+                '${album.viewCount}',
                 style: TextStyle(
                   fontSize: isMobile ? 12 : 10,
                   color: isMobile ? Colors.white70 : Colors.grey[600],
                 ),
               ),
               const SizedBox(width: 16),
-              // 创建时间
+              // 收藏数
               Icon(
-                Icons.access_time,
+                Icons.favorite,
                 size: isMobile ? 16 : 12,
                 color: isMobile ? Colors.white70 : Colors.grey[600],
               ),
               const SizedBox(width: 4),
               Text(
-                album.formattedCreatedAt,
+                '${album.favoriteCount ?? 0}',
                 style: TextStyle(
                   fontSize: isMobile ? 12 : 10,
                   color: isMobile ? Colors.white70 : Colors.grey[600],
@@ -528,7 +499,7 @@ class AlbumWaterfallItem extends StatelessWidget {
             Wrap(
               spacing: 4,
               runSpacing: 4,
-              children: album.tags!.take(3).map((tag) {
+              children: album.tags!.take(isMobile ? 3 : 2).map((tag) {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(

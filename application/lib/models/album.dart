@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'content_item.dart';
 
 part 'album.g.dart';
 
@@ -23,7 +22,7 @@ class Album {
   final String? coverImagePath; // 封面图片路径
   final String? coverThumbnailPath; // 封面缩略图路径
   final List<String>? imageIds; // 图片ID列表
-  final List<ContentItem>? images; // 图片列表（从服务器获取）
+  final List<AlbumImage>? images; // 图片列表（从服务器获取）
   final AlbumStatus status;
   final String userId;
   final String userName;
@@ -35,6 +34,8 @@ class Album {
   final bool isPublic; // 是否公开
   final int viewCount; // 浏览次数
   final int likeCount; // 点赞次数
+  final int? favoriteCount; // 收藏次数
+  final bool? isFavorited; // 当前用户是否已收藏
 
   const Album({
     required this.id,
@@ -56,6 +57,8 @@ class Album {
     required this.isPublic,
     required this.viewCount,
     required this.likeCount,
+    this.favoriteCount,
+    this.isFavorited,
   });
 
   factory Album.fromJson(Map<String, dynamic> json) {
@@ -85,7 +88,7 @@ class Album {
     String? coverImagePath,
     String? coverThumbnailPath,
     List<String>? imageIds,
-    List<ContentItem>? images,
+    List<AlbumImage>? images,
     AlbumStatus? status,
     String? userId,
     String? userName,
@@ -97,6 +100,8 @@ class Album {
     bool? isPublic,
     int? viewCount,
     int? likeCount,
+    int? favoriteCount,
+    bool? isFavorited,
   }) {
     return Album(
       id: id ?? this.id,
@@ -118,6 +123,8 @@ class Album {
       isPublic: isPublic ?? this.isPublic,
       viewCount: viewCount ?? this.viewCount,
       likeCount: likeCount ?? this.likeCount,
+      favoriteCount: favoriteCount ?? this.favoriteCount,
+      isFavorited: isFavorited ?? this.isFavorited,
     );
   }
 
@@ -143,12 +150,14 @@ class Album {
         other.tags == tags &&
         other.isPublic == isPublic &&
         other.viewCount == viewCount &&
-        other.likeCount == likeCount;
+        other.likeCount == likeCount &&
+        other.favoriteCount == favoriteCount &&
+        other.isFavorited == isFavorited;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
+    return Object.hashAll([
       id,
       title,
       description,
@@ -168,7 +177,9 @@ class Album {
       isPublic,
       viewCount,
       likeCount,
-    );
+      favoriteCount,
+      isFavorited,
+    ]);
   }
 
   @override
@@ -188,7 +199,7 @@ class Album {
   bool get isDraft => status == AlbumStatus.draft;
   bool get isPublished => status == AlbumStatus.published;
   bool get isArchived => status == AlbumStatus.archived;
-  bool get hasCover => coverImageId != null && coverImageId!.isNotEmpty;
+  bool get hasCover => coverImageUrl != null && coverImageUrl!.isNotEmpty;
   bool get isEmpty => imageIds?.isEmpty ?? true;
   bool get isNotEmpty => imageIds?.isNotEmpty ?? false;
 
@@ -310,6 +321,7 @@ class CreateAlbumRequest {
   final List<String>? imageIds;
   final List<String>? tags;
   final bool isPublic;
+  final String? coverImageId;
 
   const CreateAlbumRequest({
     this.title,
@@ -317,6 +329,7 @@ class CreateAlbumRequest {
     this.imageIds,
     this.tags,
     required this.isPublic,
+    this.coverImageId,
   });
 
   factory CreateAlbumRequest.fromJson(Map<String, dynamic> json) {

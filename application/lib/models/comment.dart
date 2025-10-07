@@ -1,111 +1,138 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'comment.g.dart';
+
+/// 评论数据模型
+@JsonSerializable()
 class Comment {
   final String id;
   final String content;
   final String authorId;
   final String authorName;
-  final String mediaId;
+  final String? authorAvatar;
+  final String albumId;
   final DateTime createdAt;
-  final DateTime? updatedAt;
+  final DateTime updatedAt;
+  final bool isDeleted;
+  final String? parentId; // 用于回复功能
+  final int likeCount;
+  final bool isLiked;
 
   const Comment({
     required this.id,
     required this.content,
     required this.authorId,
     required this.authorName,
-    required this.mediaId,
+    this.authorAvatar,
+    required this.albumId,
     required this.createdAt,
-    this.updatedAt,
+    required this.updatedAt,
+    this.isDeleted = false,
+    this.parentId,
+    this.likeCount = 0,
+    this.isLiked = false,
   });
 
-  factory Comment.fromJson(Map<String, dynamic> json) {
-    return Comment(
-      id: json['id'] as String,
-      content: json['content'] as String,
-      authorId: json['authorId'] as String,
-      authorName: json['authorName'] as String,
-      mediaId: json['mediaId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt'] as String) 
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'content': content,
-      'authorId': authorId,
-      'authorName': authorName,
-      'mediaId': mediaId,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-    };
-  }
+  factory Comment.fromJson(Map<String, dynamic> json) => _$CommentFromJson(json);
+  Map<String, dynamic> toJson() => _$CommentToJson(this);
 
   Comment copyWith({
     String? id,
     String? content,
     String? authorId,
     String? authorName,
-    String? mediaId,
+    String? authorAvatar,
+    String? albumId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isDeleted,
+    String? parentId,
+    int? likeCount,
+    bool? isLiked,
   }) {
     return Comment(
       id: id ?? this.id,
       content: content ?? this.content,
       authorId: authorId ?? this.authorId,
       authorName: authorName ?? this.authorName,
-      mediaId: mediaId ?? this.mediaId,
+      authorAvatar: authorAvatar ?? this.authorAvatar,
+      albumId: albumId ?? this.albumId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      parentId: parentId ?? this.parentId,
+      likeCount: likeCount ?? this.likeCount,
+      isLiked: isLiked ?? this.isLiked,
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Comment &&
-        other.id == id &&
-        other.content == content &&
-        other.authorId == authorId &&
-        other.authorName == authorName &&
-        other.mediaId == mediaId &&
-        other.createdAt == createdAt &&
-        other.updatedAt == updatedAt;
+    return other is Comment && other.id == id;
   }
 
   @override
-  int get hashCode {
-    return Object.hash(
-      id,
-      content,
-      authorId,
-      authorName,
-      mediaId,
-      createdAt,
-      updatedAt,
-    );
-  }
+  int get hashCode => id.hashCode;
 
   @override
-  String toString() {
-    return 'Comment(id: $id, content: $content, authorId: $authorId, authorName: $authorName, mediaId: $mediaId, createdAt: $createdAt, updatedAt: $updatedAt)';
-  }
+  String toString() => 'Comment(id: $id, content: $content, author: $authorName)';
 
-  /// Validates comment content
-  static String? validateContent(String? content) {
-    if (content == null || content.trim().isEmpty) {
-      return 'Comment cannot be empty';
+  // 计算属性
+  bool get isReply => parentId != null;
+  String get displayContent => isDeleted ? '该评论已被删除' : content;
+  String get formattedCreatedAt {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+    
+    if (difference.inDays > 7) {
+      return '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}天前';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}小时前';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}分钟前';
+    } else {
+      return '刚刚';
     }
-    if (content.trim().length < 3) {
-      return 'Comment must be at least 3 characters long';
-    }
-    if (content.trim().length > 500) {
-      return 'Comment must be less than 500 characters';
-    }
-    return null;
   }
 }
 
+/// 创建评论请求
+@JsonSerializable()
+class CreateCommentRequest {
+  final String content;
+  final String albumId;
+  final String? parentId;
+
+  const CreateCommentRequest({
+    required this.content,
+    required this.albumId,
+    this.parentId,
+  });
+
+  factory CreateCommentRequest.fromJson(Map<String, dynamic> json) => 
+      _$CreateCommentRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$CreateCommentRequestToJson(this);
+}
+
+/// 评论响应
+@JsonSerializable()
+class CommentResponse {
+  final bool success;
+  final String? message;
+  final Comment? comment;
+  final List<Comment>? comments;
+
+  const CommentResponse({
+    required this.success,
+    this.message,
+    this.comment,
+    this.comments,
+  });
+
+  factory CommentResponse.fromJson(Map<String, dynamic> json) => 
+      _$CommentResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$CommentResponseToJson(this);
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 import '../../providers/auth_provider.dart';
 import '../common/glassmorphism_card.dart';
@@ -23,7 +24,11 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _drawerAnimationController;
   late Animation<double> _drawerAnimation;
-  bool _isHovered = false; // 悬浮按钮悬停状态
+  bool _isHovered = false;
+  
+  // 拖动相关状态
+  Offset _fabPosition = const Offset(16, 16); // 初始位置
+  bool _isDragging = false; // 悬浮按钮悬停状态
 
   @override
   void initState() {
@@ -39,12 +44,42 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
       parent: _drawerAnimationController,
       curve: Curves.easeInOut,
     ));
+    _loadFabPosition();
   }
 
   @override
   void dispose() {
     _drawerAnimationController.dispose();
     super.dispose();
+  }
+
+  // 加载悬浮按钮位置
+  Future<void> _loadFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final x = prefs.getDouble('fab_position_x') ?? 16.0;
+      final y = prefs.getDouble('fab_position_y') ?? 16.0;
+      
+      if (mounted) {
+        setState(() {
+          _fabPosition = Offset(x, y);
+        });
+      }
+    } catch (e) {
+      // 如果加载失败，使用默认位置
+      print('Failed to load FAB position: $e');
+    }
+  }
+
+  // 保存悬浮按钮位置
+  Future<void> _saveFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('fab_position_x', _fabPosition.dx);
+      await prefs.setDouble('fab_position_y', _fabPosition.dy);
+    } catch (e) {
+      print('Failed to save FAB position: $e');
+    }
   }
 
   void _openDrawer() {
@@ -113,18 +148,18 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
             },
           ),
           
-                    // 悬浮菜单按钮 - 只在抽屉关闭时显示
+                    // 可拖动的悬浮菜单按钮 - 只在抽屉关闭时显示
                     AnimatedBuilder(
                       animation: _drawerAnimation,
                       builder: (context, child) {
                         return Positioned(
-                          top: 16,  // 与搜索按钮同一水平位置
-                          left: 16, // 左上角位置
+                          left: _fabPosition.dx,
+                          top: _fabPosition.dy,
                           child: Transform.scale(
                             scale: 1.0 - _drawerAnimation.value * 0.3, // 稍微缩小
                             child: Opacity(
                               opacity: (1.0 - _drawerAnimation.value) * 0.9,
-                              child: _buildFloatingMenuButton(),
+                              child: _buildDraggableFloatingMenuButton(),
                             ),
                           ),
                         );
@@ -536,6 +571,122 @@ class _GalleryWithDrawerState extends State<GalleryWithDrawer>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableFloatingMenuButton() {
+    return MouseRegion(
+      onEnter: (_) => _onHover(true),
+      onExit: (_) => _onHover(false),
+      child: AnimatedOpacity(
+        opacity: _isHovered || _isDragging ? 1.0 : 0.3, // 默认30%透明度，悬停或拖动时100%
+        duration: const Duration(milliseconds: 200),
+        child: GestureDetector(
+          onPanStart: (details) {
+            setState(() {
+              _isDragging = true;
+            });
+          },
+          onPanUpdate: (details) {
+            setState(() {
+              final screenSize = MediaQuery.of(context).size;
+              final fabSize = 56.0;
+              
+              // 计算新位置，确保按钮不会超出屏幕边界
+              double newX = _fabPosition.dx + details.delta.dx;
+              double newY = _fabPosition.dy + details.delta.dy;
+              
+              // 边界检查
+              newX = newX.clamp(0.0, screenSize.width - fabSize);
+              newY = newY.clamp(0.0, screenSize.height - fabSize);
+              
+              _fabPosition = Offset(newX, newY);
+            });
+          },
+          onPanEnd: (details) {
+            setState(() {
+              _isDragging = false;
+            });
+            // 保存位置
+            _saveFabPosition();
+          },
+          onTap: _openDrawer,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(_isDragging ? 0.15 : 0.05),
+                  blurRadius: _isDragging ? 25 : 15,
+                  offset: Offset(0, _isDragging ? 10 : 6),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(_isDragging ? 0.08 : 0.02),
+                  blurRadius: _isDragging ? 40 : 30,
+                  offset: Offset(0, _isDragging ? 20 : 12),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(_isDragging ? 0.15 : 0.09),
+                        Colors.white.withOpacity(_isDragging ? 0.12 : 0.06),
+                        Colors.white.withOpacity(_isDragging ? 0.08 : 0.04),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(_isDragging ? 0.2 : 0.1),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: _isDragging ? 36 : 32,
+                      height: _isDragging ? 36 : 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(_isDragging ? 0.35 : 0.25),
+                            Colors.white.withOpacity(_isDragging ? 0.25 : 0.15),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(_isDragging ? 0.05 : 0.03),
+                            blurRadius: _isDragging ? 8 : 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: ZViewerLogoSmall(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

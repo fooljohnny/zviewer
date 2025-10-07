@@ -6,18 +6,19 @@ import '../comments/comment_input.dart';
 import '../comments/comment_list.dart';
 import '../../providers/comment_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/comment_service.dart';
 
 class MultimediaViewer extends StatefulWidget {
   final String mediaPath;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
+  final String? albumDescription;
 
   const MultimediaViewer({
     super.key,
     required this.mediaPath,
     this.onPrevious,
     this.onNext,
+    this.albumDescription,
   });
 
   @override
@@ -34,11 +35,8 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
     // Generate a media ID based on the file path
     _mediaId = widget.mediaPath.hashCode.toString();
     
-    // Initialize comment provider with auth token
-    final authProvider = context.read<AuthProvider>();
-    _commentProvider = CommentProvider(
-      commentService: CommentService(authToken: authProvider.user?.id),
-    );
+    // Initialize comment provider
+    _commentProvider = CommentProvider();
     
     // Load comments for this media
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,46 +50,148 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
       builder: (context, authProvider, child) {
         final isAuthenticated = authProvider.isAuthenticated;
         
-        return Column(
+        // For mobile, show full-screen image with description overlay
+        return Stack(
           children: [
-            // Media viewer section
-            Expanded(
-              flex: 3,
+            // Full-screen media viewer
+            SizedBox(
+              width: double.infinity,
+              height: double.infinity,
               child: _buildMediaViewer(),
             ),
-            // Comments section
-            Expanded(
-              flex: 2,
-              child: Column(
-                children: [
-                  // Comment input
-                  CommentInput(
-                    mediaId: _mediaId,
-                    isAuthenticated: isAuthenticated,
-                    isLoading: _commentProvider.isLoading,
-                    error: _commentProvider.error,
-                    onSubmit: (content) => _submitComment(content),
-                    onClearError: () => _commentProvider.clearError(),
-                  ),
-                  // Comment list
-                  Expanded(
-                    child: CommentList(
-                      comments: _commentProvider.comments,
-                      isLoading: _commentProvider.isLoading,
-                      error: _commentProvider.error,
-                      onRetry: () => _commentProvider.refreshComments(),
-                      onEditComment: (comment) => _editComment(comment),
-                      onDeleteComment: (comment) => _deleteComment(comment),
-                      canEdit: isAuthenticated,
-                      canDelete: isAuthenticated,
-                    ),
-                  ),
-                ],
+            // Description overlay (only for images)
+            if (_isImageFile())
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _buildDescriptionOverlay(),
               ),
+            // Navigation controls
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              right: 16,
+              child: _buildNavigationControls(),
             ),
           ],
         );
       },
+    );
+  }
+
+  bool _isImageFile() {
+    final extension = widget.mediaPath.toLowerCase().split('.').last;
+    return ['jpg', 'jpeg', 'png', 'webp'].contains(extension);
+  }
+
+  Widget _buildDescriptionOverlay() {
+    // Only show description if it exists
+    if (widget.albumDescription == null || widget.albumDescription!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withOpacity(0.7),
+            Colors.black.withOpacity(0.9),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Description text
+            Text(
+              '图集描述',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.albumDescription!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavigationControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Back button
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ),
+        // Previous/Next buttons
+        Row(
+          children: [
+            if (widget.onPrevious != null)
+              GestureDetector(
+                onTap: widget.onPrevious,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.chevron_left,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 8),
+            if (widget.onNext != null)
+              GestureDetector(
+                onTap: widget.onNext,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.chevron_right,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -135,10 +235,7 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
   }
 
   Future<void> _submitComment(String content) async {
-    final success = await _commentProvider.postComment(
-      content,
-      _mediaId,
-    );
+    final success = await _commentProvider.postComment(content);
     
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,7 +277,7 @@ class _MultimediaViewerState extends State<MultimediaViewer> {
     );
 
     if (confirmed == true && mounted) {
-      final success = await _commentProvider.deleteComment(comment.id);
+      final success = await _commentProvider.deleteComment('', comment.id);
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

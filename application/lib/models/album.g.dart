@@ -17,7 +17,7 @@ Album _$AlbumFromJson(Map<String, dynamic> json) => Album(
           ?.map((e) => e as String)
           .toList(),
       images: (json['images'] as List<dynamic>?)
-          ?.map((e) => ContentItem.fromJson(e as Map<String, dynamic>))
+          ?.map((e) => AlbumImage.fromJson(e as Map<String, dynamic>))
           .toList(),
       status: $enumDecode(_$AlbumStatusEnumMap, json['status']),
       userId: json['userId'] as String,
@@ -30,6 +30,8 @@ Album _$AlbumFromJson(Map<String, dynamic> json) => Album(
       isPublic: json['isPublic'] as bool,
       viewCount: (json['viewCount'] as num).toInt(),
       likeCount: (json['likeCount'] as num).toInt(),
+      favoriteCount: (json['favoriteCount'] as num?)?.toInt(),
+      isFavorited: json['isFavorited'] as bool?,
     );
 
 Map<String, dynamic> _$AlbumToJson(Album instance) => <String, dynamic>{
@@ -52,6 +54,8 @@ Map<String, dynamic> _$AlbumToJson(Album instance) => <String, dynamic>{
       'isPublic': instance.isPublic,
       'viewCount': instance.viewCount,
       'likeCount': instance.likeCount,
+      'favoriteCount': instance.favoriteCount,
+      'isFavorited': instance.isFavorited,
     };
 
 const _$AlbumStatusEnumMap = {
@@ -69,6 +73,7 @@ CreateAlbumRequest _$CreateAlbumRequestFromJson(Map<String, dynamic> json) =>
           .toList(),
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
       isPublic: json['isPublic'] as bool,
+      coverImageId: json['coverImageId'] as String?,
     );
 
 Map<String, dynamic> _$CreateAlbumRequestToJson(CreateAlbumRequest instance) =>
@@ -78,6 +83,7 @@ Map<String, dynamic> _$CreateAlbumRequestToJson(CreateAlbumRequest instance) =>
       'imageIds': instance.imageIds,
       'tags': instance.tags,
       'isPublic': instance.isPublic,
+      'coverImageId': instance.coverImageId,
     };
 
 UpdateAlbumRequest _$UpdateAlbumRequestFromJson(Map<String, dynamic> json) =>
