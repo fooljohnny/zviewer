@@ -5,7 +5,6 @@ import '../../models/album.dart';
 import '../common/glassmorphism_card.dart';
 import 'album_details.dart';
 import 'album_form.dart';
-import 'album_filters.dart';
 
 class AlbumManagementView extends StatefulWidget {
   const AlbumManagementView({super.key});
